@@ -1,0 +1,63 @@
+---
+source: src/resources.rs
+expression: "ServiceUser::crd()"
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: serviceusers.lldap.huizinga.dev
+spec:
+  group: lldap.huizinga.dev
+  names:
+    categories: []
+    kind: ServiceUser
+    plural: serviceusers
+    shortNames:
+      - lsu
+    singular: serviceuser
+  scope: Namespaced
+  versions:
+    - additionalPrinterColumns:
+        - description: Does the service user exist in LLDAP
+          jsonPath: ".status.exists"
+          name: Exists
+          type: boolean
+        - description: Can the service user manage passwords
+          jsonPath: ".spec.passwordManager"
+          name: Manager
+          type: boolean
+        - jsonPath: ".metadata.creationTimestamp"
+          name: Age
+          type: date
+      name: v1
+      schema:
+        openAPIV3Schema:
+          description: Custom resource for managing Service Users inside of LLDAP
+          properties:
+            spec:
+              properties:
+                additionalGroups:
+                  default: []
+                  items:
+                    type: string
+                  type: array
+                passwordManager:
+                  default: false
+                  type: boolean
+              type: object
+            status:
+              nullable: true
+              properties:
+                exists:
+                  type: boolean
+              required:
+                - exists
+              type: object
+          required:
+            - spec
+          title: ServiceUser
+          type: object
+      served: true
+      storage: true
+      subresources:
+        status: {}
