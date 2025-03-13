@@ -94,11 +94,11 @@ pub struct AddUserToGroup {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use cynic::MutationBuilder;
+    use cynic::QueryBuilder;
 
     #[test]
     fn get_user_attributes_gql_output() {
-        use cynic::QueryBuilder;
-
         let operation = GetUserAttributes::build(());
 
         insta::assert_snapshot!(operation.query);
@@ -106,8 +106,6 @@ mod tests {
 
     #[test]
     fn create_managed_user_attribute_gql_output() {
-        use cynic::MutationBuilder;
-
         let operation = CreateManagedUserAttribute::build(());
 
         insta::assert_snapshot!(operation.query);
@@ -115,8 +113,6 @@ mod tests {
 
     #[test]
     fn list_managed_users_gql_output() {
-        use cynic::QueryBuilder;
-
         let operation = ListManagedUsers::build(());
 
         insta::assert_snapshot!(operation.query);
@@ -124,8 +120,6 @@ mod tests {
 
     #[test]
     fn delete_user_gql_output() {
-        use cynic::MutationBuilder;
-
         let operation = DeleteUser::build(DeleteUserVariables { id: "user" });
 
         insta::assert_snapshot!(operation.query);
@@ -133,8 +127,6 @@ mod tests {
 
     #[test]
     fn create_user_gql_output() {
-        use cynic::MutationBuilder;
-
         let operation = CreateUser::build(CreateUserVariables { id: "user" });
 
         insta::assert_snapshot!(operation.query);
@@ -142,8 +134,6 @@ mod tests {
 
     #[test]
     fn add_user_to_group_gql_output() {
-        use cynic::MutationBuilder;
-
         let operation = AddUserToGroup::build(AddUserToGroupVariables {
             id: "user",
             group: 3,
