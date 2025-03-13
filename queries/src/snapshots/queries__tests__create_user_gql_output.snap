@@ -1,0 +1,10 @@
+---
+source: src/lib.rs
+assertion_line: 142
+expression: operation.query
+---
+mutation CreateUser($id: String!) {
+  createUser(user: {attributes: [{name: "managed", value: ["1"]}], email: $id, id: $id}) {
+    id
+  }
+}

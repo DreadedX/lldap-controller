@@ -1,0 +1,9 @@
+---
+source: src/lib.rs
+expression: operation.query
+---
+query ListManagedUsers {
+  users(filters: {eq: {field: "managed", value: "1"}}) {
+    id
+  }
+}

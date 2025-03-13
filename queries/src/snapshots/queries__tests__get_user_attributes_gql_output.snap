@@ -1,0 +1,13 @@
+---
+source: src/lib.rs
+expression: operation.query
+---
+query GetUserAttributes {
+  schema {
+    userSchema {
+      attributes {
+        name
+      }
+    }
+  }
+}

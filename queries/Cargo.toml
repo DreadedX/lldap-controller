@@ -1,0 +1,13 @@
+[package]
+name = "queries"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+cynic = { workspace = true }
+
+[dev-dependencies]
+insta = { workspace = true }
+
+[build-dependencies]
+cynic-codegen = "3.10.0"

@@ -1,0 +1,9 @@
+---
+source: src/lib.rs
+expression: operation.query
+---
+mutation AddUserToGroup($group: Int!, $id: String!) {
+  addUserToGroup(groupId: $group, userId: $id) {
+    ok
+  }
+}
