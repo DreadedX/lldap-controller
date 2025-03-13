@@ -13,7 +13,7 @@ insta = "1.42.2"
 [dependencies]
 queries = { path = "./queries" }
 anyhow = "1.0.97"
-lldap_auth = "0.3.0"
+lldap_auth = { git = "https://github.com/lldap/lldap" }
 rand = { version = "0.8.0" }
 serde_json = "1.0.140"
 surf = "2.3.2"

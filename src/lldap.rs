@@ -5,7 +5,7 @@ use surf::Client;
 pub async fn change_password(client: &Client, user_id: &str, password: &str) -> anyhow::Result<()> {
     let mut rng = rand::rngs::OsRng;
     let registration_start_request =
-        opaque::client::registration::start_registration(password, &mut rng)
+        opaque::client::registration::start_registration(password.as_bytes(), &mut rng)
             .context("Could not initiate password change")?;
 
     let start_request = registration::ClientRegistrationStartRequest {
