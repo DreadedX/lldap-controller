@@ -18,16 +18,16 @@ spec:
   scope: Namespaced
   versions:
     - additionalPrinterColumns:
-        - description: Does the service user exist in LLDAP
-          jsonPath: ".status.exists"
-          name: Exists
-          type: boolean
         - description: Can the service user manage passwords
           jsonPath: ".spec.passwordManager"
           name: Manager
           type: boolean
         - jsonPath: ".metadata.creationTimestamp"
           name: Age
+          type: date
+        - description: Secret creation timestamp
+          jsonPath: ".status.secret_created"
+          name: Secret
           type: date
       name: v1
       schema:
@@ -48,10 +48,10 @@ spec:
             status:
               nullable: true
               properties:
-                exists:
-                  type: boolean
-              required:
-                - exists
+                secret_created:
+                  format: date-time
+                  nullable: true
+                  type: string
               type: object
           required:
             - spec
