@@ -44,6 +44,7 @@ async fn reconcile(obj: Arc<ServiceUser>, ctx: Arc<Data>) -> Result<Action> {
         .name
         .clone()
         .ok_or(Error::MissingObjectKey(".metadata.name"))?;
+    let secret_name = format!("{name}-lldap-credentials");
     let namespace = obj
         .metadata
         .namespace
@@ -59,11 +60,11 @@ async fn reconcile(obj: Arc<ServiceUser>, ctx: Arc<Data>) -> Result<Action> {
     // TODO: Potentially issue: someone modifies the secret and removes the pass
     let mut created = false;
     let mut secret = secrets
-        .entry(&name)
+        .entry(&secret_name)
         .await
         .map_err(Error::Kube)?
         .or_insert(|| {
-            debug!(name, "Generating new secret");
+            debug!(name, secret_name, "Generating new secret");
 
             let mut contents = BTreeMap::new();
             contents.insert("username".into(), name.clone());
