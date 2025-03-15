@@ -1,9 +1,0 @@
----
-source: queries/src/lib.rs
-expression: operation.query
----
-mutation CreateManagedUserAttribute {
-  addUserAttribute(attributeType: INTEGER, isEditable: false, isList: false, isVisible: false, name: "managed") {
-    ok
-  }
-}
