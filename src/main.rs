@@ -1,5 +1,6 @@
-use std::{collections::BTreeMap, sync::Arc, time::Duration};
+use std::{collections::BTreeMap, str::from_utf8, sync::Arc, time::Duration};
 
+use cynic::{http::SurfExt, MutationBuilder, QueryBuilder};
 use futures::StreamExt;
 use k8s_openapi::api::core::v1::Secret;
 use kube::{
@@ -9,11 +10,17 @@ use kube::{
         events::{Event, EventType, Recorder, Reporter},
         Controller,
     },
-    Api, Client, Resource,
+    Api, Client as KubeClient, Resource,
 };
-use lldap_controller::resources::{ServiceUser, ServiceUserStatus};
+use lldap_auth::login::{ClientSimpleLoginRequest, ServerLoginResponse};
+use lldap_controller::{
+    lldap::change_password,
+    resources::{ServiceUser, ServiceUserStatus},
+};
 use passwords::PasswordGenerator;
+use queries::{CreateUser, CreateUserVariables, ListUsers};
 use serde_json::json;
+use surf::{Client as SurfClient, Config, Url};
 use tracing::{debug, info, instrument, warn};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter, Registry};
 
@@ -29,8 +36,41 @@ enum Error {
 
 type Result<T, E = Error> = std::result::Result<T, E>;
 
+struct LldapConfig {
+    username: String,
+    password: String,
+    url: String,
+}
+
+impl LldapConfig {
+    async fn client(&self) -> std::result::Result<SurfClient, surf::Error> {
+        let client: SurfClient = Config::new()
+            .set_base_url(Url::parse(&self.url)?)
+            .set_timeout(Some(Duration::from_secs(1)))
+            .try_into()?;
+
+        let response: ServerLoginResponse = client
+            .post("/auth/simple/login")
+            .body_json(&ClientSimpleLoginRequest {
+                username: self.username.clone().into(),
+                password: self.password.clone(),
+            })?
+            .recv_json()
+            .await?;
+
+        let client = client
+            .config()
+            .clone()
+            .add_header("Authorization", format!("Bearer {}", response.token))?
+            .try_into()?;
+
+        Ok(client)
+    }
+}
+
 struct Data {
-    client: Client,
+    client: KubeClient,
+    lldap: LldapConfig,
     recorder: Recorder,
     pg: PasswordGenerator,
 }
@@ -50,6 +90,7 @@ async fn reconcile(obj: Arc<ServiceUser>, ctx: Arc<Data>) -> Result<Action> {
         .namespace
         .clone()
         .ok_or(Error::MissingObjectKey(".metadata.namespace"))?;
+    let username = format!("{name}.{namespace}");
     let oref = obj.controller_owner_ref(&()).unwrap();
 
     debug!(name, "reconcile request");
@@ -67,7 +108,7 @@ async fn reconcile(obj: Arc<ServiceUser>, ctx: Arc<Data>) -> Result<Action> {
             debug!(name, secret_name, "Generating new secret");
 
             let mut contents = BTreeMap::new();
-            contents.insert("username".into(), name.clone());
+            contents.insert("username".into(), username.clone());
             contents.insert("password".into(), ctx.pg.generate_one().unwrap());
 
             created = true;
@@ -102,8 +143,8 @@ async fn reconcile(obj: Arc<ServiceUser>, ctx: Arc<Data>) -> Result<Action> {
                 &Event {
                     type_: EventType::Normal,
                     reason: "SecretCreated".into(),
-                    note: Some(format!("Created secret '{name}'")),
-                    action: "NewSecret".into(),
+                    note: Some(format!("Created secret '{secret_name}'")),
+                    action: "SecretCreated".into(),
                     secondary: Some(secret.get().object_ref(&())),
                 },
                 &obj.object_ref(&()),
@@ -111,6 +152,50 @@ async fn reconcile(obj: Arc<ServiceUser>, ctx: Arc<Data>) -> Result<Action> {
             .await
             .map_err(Error::Kube)?;
     }
+
+    let lldap_client = ctx.lldap.client().await.unwrap();
+
+    let operation = ListUsers::build(());
+    let response = lldap_client
+        .post("/api/graphql")
+        .run_graphql(operation)
+        .await
+        .unwrap();
+
+    if !response
+        .data
+        .expect("Should get data")
+        .users
+        .iter()
+        .any(|user| user.id == username)
+    {
+        let operation = CreateUser::build(CreateUserVariables { id: &username });
+        lldap_client
+            .post("/api/graphql")
+            .run_graphql(operation)
+            .await
+            .unwrap();
+
+        ctx.recorder
+            .publish(
+                &Event {
+                    type_: EventType::Normal,
+                    reason: "UserCreated".into(),
+                    note: Some(format!("Created user '{username}'")),
+                    action: "UserCreated".into(),
+                    secondary: None,
+                },
+                &obj.object_ref(&()),
+            )
+            .await
+            .map_err(Error::Kube)?;
+    }
+
+    let password = secret.get().data.as_ref().unwrap().get("password").unwrap();
+    let password = from_utf8(&password.0).unwrap();
+    change_password(&lldap_client, &username, password)
+        .await
+        .unwrap();
 
     let service_users = Api::<ServiceUser>::namespaced(client.clone(), &namespace);
     let status = json!({
@@ -140,7 +225,13 @@ async fn main() -> anyhow::Result<()> {
 
     info!("Starting controller");
 
-    let client = Client::try_default().await?;
+    let lldap = LldapConfig {
+        username: std::env::var("LLDAP_USERNAME").unwrap(),
+        password: std::env::var("LLDAP_PASSWORD").unwrap(),
+        url: std::env::var("LLDAP_URL").unwrap(),
+    };
+
+    let client = KubeClient::try_default().await?;
 
     let reporter: Reporter = CONTROLLER_NAME.into();
     let recorder = Recorder::new(client.clone(), reporter);
@@ -161,6 +252,7 @@ async fn main() -> anyhow::Result<()> {
             error_policy,
             Arc::new(Data {
                 client,
+                lldap,
                 recorder,
                 pg,
             }),
