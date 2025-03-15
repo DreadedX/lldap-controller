@@ -1,6 +1,7 @@
 use anyhow::{anyhow, Context};
 use lldap_auth::{opaque, registration};
 use surf::Client;
+use tracing::debug;
 
 pub async fn change_password(client: &Client, user_id: &str, password: &str) -> anyhow::Result<()> {
     let mut rng = rand::rngs::OsRng;
@@ -42,7 +43,7 @@ pub async fn change_password(client: &Client, user_id: &str, password: &str) -> 
         .await
         .map_err(|e| anyhow!(e))?;
 
-    println!("Changed '{user_id}' password successfully");
+    debug!("Changed '{user_id}' password successfully");
 
     Ok(())
 }
