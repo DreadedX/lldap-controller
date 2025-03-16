@@ -13,13 +13,13 @@ use queries::{CreateUser, CreateUserVariables, ListUsers};
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
-    #[error("{0}")]
+    #[error("Cynic error: {0}")]
     Cynic(#[from] CynicReqwestError),
-    #[error("{0}")]
+    #[error("Reqwest error: {0}")]
     Reqwest(#[from] reqwest::Error),
-    #[error("{0}")]
+    #[error("Authentication error: {0}")]
     Authentication(#[from] AuthenticationError),
-    #[error("{0}")]
+    #[error("GraphQL error: {0}")]
     GraphQl(#[from] GraphQlError),
 }
 
