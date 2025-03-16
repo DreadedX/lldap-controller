@@ -81,16 +81,26 @@ impl LldapConfig {
             .default_headers(headers)
             .build()?;
 
-        Ok(LldapClient(client))
+        Ok(LldapClient {
+            client,
+            url: self.url.clone(),
+        })
     }
 }
 
-pub struct LldapClient(reqwest::Client);
+pub struct LldapClient {
+    client: reqwest::Client,
+    url: String,
+}
 
 impl LldapClient {
     pub async fn list_users(&self) -> Result<impl Iterator<Item = String>> {
         let operation = ListUsers::build(());
-        let response = self.0.post("/api/graphql").run_graphql(operation).await?;
+        let response = self
+            .client
+            .post(format!("{}/api/graphql", self.url))
+            .run_graphql(operation)
+            .await?;
 
         check_graphql_errors(&response)?;
 
@@ -106,7 +116,11 @@ impl LldapClient {
         let operation = CreateUser::build(CreateUserVariables { id: username });
 
         // TODO: Check the response?
-        let response = self.0.post("/api/graphql").run_graphql(operation).await?;
+        let response = self
+            .client
+            .post(format!("{}/api/graphql", self.url))
+            .run_graphql(operation)
+            .await?;
 
         check_graphql_errors(&response)
     }
@@ -122,8 +136,8 @@ impl LldapClient {
         };
 
         let response: ServerRegistrationStartResponse = self
-            .0
-            .post("/auth/opaque/register/start")
+            .client
+            .post(format!("{}/auth/opaque/register/start", self.url))
             .json(&start_request)
             .send()
             .await?
@@ -142,8 +156,8 @@ impl LldapClient {
         };
 
         let _response = self
-            .0
-            .post("/auth/opaque/register/finish")
+            .client
+            .post(format!("{}/auth/opaque/register/finish", self.url))
             .json(&request)
             .send()
             .await?;
