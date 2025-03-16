@@ -22,12 +22,12 @@ spec:
           jsonPath: ".spec.passwordManager"
           name: Manager
           type: boolean
+        - description: Secret creation timestamp
+          jsonPath: ".status.secretCreated"
+          name: Password
+          type: date
         - jsonPath: ".metadata.creationTimestamp"
           name: Age
-          type: date
-        - description: Secret creation timestamp
-          jsonPath: ".status.secret_created"
-          name: Secret
           type: date
       name: v1
       schema:
@@ -48,7 +48,7 @@ spec:
             status:
               nullable: true
               properties:
-                secret_created:
+                secretCreated:
                   format: date-time
                   nullable: true
                   type: string
