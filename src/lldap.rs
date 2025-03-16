@@ -54,6 +54,7 @@ impl LldapConfig {
     }
 
     pub async fn build_client(&self) -> Result<LldapClient> {
+        debug!("Creating LLDAP client");
         let timeout = Duration::from_secs(1);
 
         let client = reqwest::ClientBuilder::new().timeout(timeout).build()?;

@@ -13,7 +13,7 @@ use passwords::PasswordGenerator;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-use tracing::{debug, instrument};
+use tracing::{debug, instrument, trace};
 
 use crate::context::{Context, ControllerEvents};
 use crate::lldap;
@@ -110,6 +110,7 @@ impl ServiceUser {
         let secrets = Api::<Secret>::namespaced(client.clone(), &namespace);
 
         // TODO: Potentially issue: someone modifies the secret and removes the pass
+        trace!(name, "Get or create secret");
         let mut created = false;
         let mut secret = secrets
             .entry(&secret_name)
@@ -124,6 +125,7 @@ impl ServiceUser {
                 new_secret(&username, oref)
             });
 
+        trace!(name, "Committing secret");
         secret
             .commit(&PostParams {
                 dry_run: false,
@@ -133,6 +135,7 @@ impl ServiceUser {
         let secret = secret;
 
         if created {
+            trace!(name, "Sending secret creating notification");
             // The reason this is here instead of inside the or_insert is that we
             // want to send the event _after_ it successfully committed.
             // Also or_insert is not async!
@@ -143,6 +146,7 @@ impl ServiceUser {
 
         let lldap_client = ctx.lldap_config.build_client().await?;
 
+        trace!(name, "Creating user if needed");
         if lldap_client.list_users().await?.any(|id| id == username) {
             debug!(name, username, "User already exists");
         } else {
@@ -152,10 +156,12 @@ impl ServiceUser {
             ctx.recorder.user_created(self.as_ref(), &username).await?;
         }
 
+        trace!(name, "Updating password");
         let password = secret.get().data.as_ref().unwrap().get("password").unwrap();
         let password = from_utf8(&password.0).unwrap();
         lldap_client.update_password(&username, password).await?;
 
+        trace!(name, "Updating status");
         let service_users = Api::<ServiceUser>::namespaced(client.clone(), &namespace);
         let status = json!({
             "status": ServiceUserStatus { secret_created: secret.get().meta().creation_timestamp.as_ref().map(|ts| ts.0) }
