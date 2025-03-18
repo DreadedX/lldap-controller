@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lldap-controller
+  labels:
+    app: lldap-controller
+    app.kubernetes.io/name: lldap-controller
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: lldap-controller
+  template:
+    metadata:
+      labels:
+        app: lldap-controller
+      annotations:
+        kubectl.kubernetes.io/default-container: lldap-controller
+    spec:
+      serviceAccountName: lldap-controller
+      securityContext: {}
+      containers:
+        - name: lldap-controller
+          image: git.huizinga.dev/dreaded_x/lldap-controller:sha-${SHA_SHORT}
+          imagePullPolicy: IfNotPresent
+          securityContext: {}
+          resources:
+            limits:
+              cpu: 200m
+              memory: 256Mi
+            requests:
+              cpu: 50m
+              memory: 100Mi
+          env:
+            - name: RUST_LOG
+              value: info,lldap_controller=debug
+            - name: LLDAP_URL
+              value: "http://lldap:17170"
+            - name: LLDAP_USERNAME
+              value: admin
+            - name: LLDAP_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: lldap-credentials
+                  key: lldap-ldap-user-pass

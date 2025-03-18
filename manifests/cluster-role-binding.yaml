@@ -1,0 +1,11 @@
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: lldap-controller
+subjects:
+  - kind: ServiceAccount
+    name: lldap-controller
+roleRef:
+  kind: ClusterRole
+  name: lldap-controller
+  apiGroup: rbac.authorization.k8s.io
