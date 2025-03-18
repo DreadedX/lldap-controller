@@ -43,6 +43,10 @@ pub trait ControllerEvents {
     async fn user_deleted<T>(&self, obj: &T, username: &str) -> Result<(), Self::Error>
     where
         T: Resource<DynamicType = ()> + Sync;
+
+    async fn user_not_found<T>(&self, obj: &T, username: &str) -> Result<(), Self::Error>
+    where
+        T: Resource<DynamicType = ()> + Sync;
 }
 
 #[async_trait]
@@ -93,6 +97,23 @@ impl ControllerEvents for Recorder {
                 reason: "UserDeleted".into(),
                 note: Some(format!("Deleted user '{username}'")),
                 action: "UserDeleted".into(),
+                secondary: None,
+            },
+            &obj.object_ref(&()),
+        )
+        .await
+    }
+
+    async fn user_not_found<T>(&self, obj: &T, username: &str) -> Result<(), Self::Error>
+    where
+        T: Resource<DynamicType = ()> + Sync,
+    {
+        self.publish(
+            &Event {
+                type_: EventType::Warning,
+                reason: "UserNotFound".into(),
+                note: Some(format!("User '{username}' not found")),
+                action: "UserNotFound".into(),
                 secondary: None,
             },
             &obj.object_ref(&()),

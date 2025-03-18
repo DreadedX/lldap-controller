@@ -18,7 +18,7 @@ use schemars::JsonSchema;
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-use tracing::{debug, instrument, trace};
+use tracing::{debug, instrument, trace, warn};
 
 use crate::context::{Context, ControllerEvents};
 use crate::lldap;
@@ -244,8 +244,22 @@ impl Reconcile for ServiceUser {
         let lldap_client = ctx.lldap_config.build_client().await?;
 
         trace!(name, username, "Deleting user");
-        lldap_client.delete_user(&username).await?;
-        ctx.recorder.user_deleted(self.as_ref(), &username).await?;
+        match lldap_client.delete_user(&username).await {
+            Err(lldap::Error::GraphQl(err))
+                if err.message == format!("Entity not found: `No such user: '{username}'`") =>
+            {
+                ctx.recorder
+                    .user_not_found(self.as_ref(), &username)
+                    .await?;
+                warn!(name, username, "User not found");
+                Ok(())
+            }
+            Ok(_) => {
+                ctx.recorder.user_deleted(self.as_ref(), &username).await?;
+                Ok(())
+            }
+            Err(err) => Err(err),
+        }?;
 
         Ok(Action::await_change())
     }
