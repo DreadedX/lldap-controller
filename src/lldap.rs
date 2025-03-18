@@ -9,7 +9,7 @@ use tracing::debug;
 use cynic::http::{CynicReqwestError, ReqwestExt};
 use cynic::{GraphQlError, GraphQlResponse, MutationBuilder, QueryBuilder};
 use lldap_auth::login::{ClientSimpleLoginRequest, ServerLoginResponse};
-use queries::{CreateUser, CreateUserVariables, ListUsers};
+use queries::{CreateUser, CreateUserVariables, DeleteUser, DeleteUserVariables, ListUsers};
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
@@ -116,7 +116,18 @@ impl LldapClient {
     pub async fn create_user(&self, username: &str) -> Result<()> {
         let operation = CreateUser::build(CreateUserVariables { id: username });
 
-        // TODO: Check the response?
+        let response = self
+            .client
+            .post(format!("{}/api/graphql", self.url))
+            .run_graphql(operation)
+            .await?;
+
+        check_graphql_errors(&response)
+    }
+
+    pub async fn delete_user(&self, username: &str) -> Result<()> {
+        let operation = DeleteUser::build(DeleteUserVariables { id: username });
+
         let response = self
             .client
             .post(format!("{}/api/graphql", self.url))

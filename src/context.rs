@@ -39,6 +39,10 @@ pub trait ControllerEvents {
     async fn user_created<T>(&self, obj: &T, username: &str) -> Result<(), Self::Error>
     where
         T: Resource<DynamicType = ()> + Sync;
+
+    async fn user_deleted<T>(&self, obj: &T, username: &str) -> Result<(), Self::Error>
+    where
+        T: Resource<DynamicType = ()> + Sync;
 }
 
 #[async_trait]
@@ -72,6 +76,23 @@ impl ControllerEvents for Recorder {
                 reason: "UserCreated".into(),
                 note: Some(format!("Created user '{username}'")),
                 action: "UserCreated".into(),
+                secondary: None,
+            },
+            &obj.object_ref(&()),
+        )
+        .await
+    }
+
+    async fn user_deleted<T>(&self, obj: &T, username: &str) -> Result<(), Self::Error>
+    where
+        T: Resource<DynamicType = ()> + Sync,
+    {
+        self.publish(
+            &Event {
+                type_: EventType::Normal,
+                reason: "UserDeleted".into(),
+                note: Some(format!("Deleted user '{username}'")),
+                action: "UserDeleted".into(),
                 secondary: None,
             },
             &obj.object_ref(&()),

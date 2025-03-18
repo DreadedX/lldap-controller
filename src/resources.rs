@@ -132,6 +132,10 @@ where
     )
 }
 
+fn format_username(name: &str, namespace: &str) -> String {
+    format!("{name}.{namespace}")
+}
+
 #[async_trait]
 impl Reconcile for ServiceUser {
     async fn reconcile(self: Arc<Self>, ctx: Arc<Context>) -> Result<Action> {
@@ -152,7 +156,7 @@ impl Reconcile for ServiceUser {
         debug!(name, "Apply");
 
         let secret_name = format!("{name}-lldap-credentials");
-        let username = format!("{name}.{namespace}");
+        let username = format_username(&name, &namespace);
 
         let client = &ctx.client;
         let secrets = Api::<Secret>::namespaced(client.clone(), &namespace);
@@ -221,8 +225,27 @@ impl Reconcile for ServiceUser {
         Ok(Action::requeue(Duration::from_secs(3600)))
     }
 
-    async fn cleanup(self: Arc<Self>, _ctx: Arc<Context>) -> Result<Action> {
-        debug!(name = self.name_any(), "Cleanup");
+    async fn cleanup(self: Arc<Self>, ctx: Arc<Context>) -> Result<Action> {
+        let name = self
+            .metadata
+            .name
+            .clone()
+            .ok_or(Error::MissingObjectKey(".metadata.name"))?;
+        let namespace = self
+            .metadata
+            .namespace
+            .clone()
+            .ok_or(Error::MissingObjectKey(".metadata.namespace"))?;
+
+        debug!(name, "Cleanup");
+
+        let username = format_username(&name, &namespace);
+
+        let lldap_client = ctx.lldap_config.build_client().await?;
+
+        trace!(name, username, "Deleting user");
+        lldap_client.delete_user(&username).await?;
+        ctx.recorder.user_deleted(self.as_ref(), &username).await?;
 
         Ok(Action::await_change())
     }
