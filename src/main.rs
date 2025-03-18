@@ -9,7 +9,7 @@ use kube::{
 use lldap_controller::{
     context::Context,
     lldap::LldapConfig,
-    resources::{self, ServiceUser},
+    resources::{self, reconcile, ServiceUser},
 };
 use tracing::{debug, info, warn};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter, Registry};
@@ -44,7 +44,7 @@ async fn main() -> anyhow::Result<()> {
     Controller::new(service_users.clone(), Default::default())
         .owns(secrets, Default::default())
         .shutdown_on_signal()
-        .run(ServiceUser::reconcile, error_policy, Arc::new(data))
+        .run(reconcile, error_policy, Arc::new(data))
         .for_each(|res| async move {
             match res {
                 Ok(obj) => debug!("reconciled {:?}", obj.0.name),
