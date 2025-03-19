@@ -9,7 +9,10 @@ use tracing::debug;
 use cynic::http::{CynicReqwestError, ReqwestExt};
 use cynic::{GraphQlError, GraphQlResponse, MutationBuilder, QueryBuilder};
 use lldap_auth::login::{ClientSimpleLoginRequest, ServerLoginResponse};
-use queries::{CreateUser, CreateUserVariables, DeleteUser, DeleteUserVariables, ListUsers};
+use queries::{
+    CreateUser, CreateUserVariables, DeleteUser, DeleteUserVariables, GetUser, GetUserVariables,
+    User,
+};
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
@@ -25,14 +28,16 @@ pub enum Error {
 
 pub type Result<T, E = Error> = std::result::Result<T, E>;
 
-fn check_graphql_errors<T>(response: &GraphQlResponse<T>) -> Result<()> {
+fn check_graphql_errors<T>(response: GraphQlResponse<T>) -> Result<T> {
     if let Some(errors) = &response.errors {
         if !errors.is_empty() {
             Err(errors.first().expect("Should not be empty").clone())?;
         }
     }
 
-    Ok(())
+    Ok(response
+        .data
+        .expect("Data should be valid if there are no error"))
 }
 
 pub struct LldapConfig {
@@ -95,25 +100,18 @@ pub struct LldapClient {
 }
 
 impl LldapClient {
-    pub async fn list_users(&self) -> Result<impl Iterator<Item = String>> {
-        let operation = ListUsers::build(());
+    pub async fn get_user(&self, username: &str) -> Result<User> {
+        let operation = GetUser::build(GetUserVariables { id: username });
         let response = self
             .client
             .post(format!("{}/api/graphql", self.url))
             .run_graphql(operation)
             .await?;
 
-        check_graphql_errors(&response)?;
-
-        Ok(response
-            .data
-            .expect("Data should be valid if there are no error")
-            .users
-            .into_iter()
-            .map(|user| user.id))
+        Ok(check_graphql_errors(response)?.user)
     }
 
-    pub async fn create_user(&self, username: &str) -> Result<()> {
+    pub async fn create_user(&self, username: &str) -> Result<User> {
         let operation = CreateUser::build(CreateUserVariables { id: username });
 
         let response = self
@@ -122,7 +120,7 @@ impl LldapClient {
             .run_graphql(operation)
             .await?;
 
-        check_graphql_errors(&response)
+        Ok(check_graphql_errors(response)?.create_user)
     }
 
     pub async fn delete_user(&self, username: &str) -> Result<()> {
@@ -134,7 +132,9 @@ impl LldapClient {
             .run_graphql(operation)
             .await?;
 
-        check_graphql_errors(&response)
+        check_graphql_errors(response)?;
+
+        Ok(())
     }
 
     pub async fn update_password(&self, username: &str, password: &str) -> Result<()> {

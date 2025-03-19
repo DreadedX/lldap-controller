@@ -1,17 +1,6 @@
 #[cynic::schema("lldap")]
 pub(crate) mod schema {}
 
-#[derive(cynic::QueryFragment, Debug)]
-#[cynic(graphql_type = "Query")]
-pub struct ListUsers {
-    pub users: Vec<User>,
-}
-
-#[derive(cynic::QueryFragment, Debug)]
-pub struct User {
-    pub id: String,
-}
-
 #[derive(cynic::QueryVariables, Debug)]
 pub struct DeleteUserVariables<'a> {
     pub id: &'a str,
@@ -54,18 +43,34 @@ pub struct AddUserToGroup {
     pub add_user_to_group: Success,
 }
 
+#[derive(cynic::QueryVariables, Debug)]
+pub struct GetUserVariables<'a> {
+    pub id: &'a str,
+}
+
+#[derive(cynic::QueryFragment, Debug)]
+#[cynic(graphql_type = "Query", variables = "GetUserVariables")]
+pub struct GetUser {
+    #[arguments(userId: $id)]
+    pub user: User,
+}
+
+#[derive(cynic::QueryFragment, Debug)]
+pub struct User {
+    pub id: String,
+    pub groups: Vec<Group>,
+}
+
+#[derive(cynic::QueryFragment, Debug)]
+pub struct Group {
+    pub id: i32,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use cynic::MutationBuilder;
     use cynic::QueryBuilder;
-
-    #[test]
-    fn list_users_gql_output() {
-        let operation = ListUsers::build(());
-
-        insta::assert_snapshot!(operation.query);
-    }
 
     #[test]
     fn delete_user_gql_output() {
@@ -87,6 +92,13 @@ mod tests {
             id: "user",
             group: 3,
         });
+
+        insta::assert_snapshot!(operation.query);
+    }
+
+    #[test]
+    fn get_user_gql_output() {
+        let operation = GetUser::build(GetUserVariables { id: "user" });
 
         insta::assert_snapshot!(operation.query);
     }

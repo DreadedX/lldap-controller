@@ -199,14 +199,24 @@ impl Reconcile for ServiceUser {
         let lldap_client = ctx.lldap_config.build_client().await?;
 
         trace!(name, "Creating user if needed");
-        if lldap_client.list_users().await?.any(|id| id == username) {
-            debug!(name, username, "User already exists");
-        } else {
-            debug!(name, username, "Creating new user");
+        let _user = match lldap_client.get_user(&username).await {
+            Err(lldap::Error::GraphQl(err))
+                if err.message == format!("Entity not found: `{username}`") =>
+            {
+                debug!(name, username, "Creating new user");
 
-            lldap_client.create_user(&username).await?;
-            ctx.recorder.user_created(self.as_ref(), &username).await?;
-        }
+                let user = lldap_client.create_user(&username).await?;
+                ctx.recorder.user_created(self.as_ref(), &username).await?;
+
+                Ok(user)
+            }
+            Ok(user) => {
+                debug!(name, username, "User already exists");
+
+                Ok(user)
+            }
+            Err(err) => Err(err),
+        }?;
 
         trace!(name, "Updating password");
         let password = secret.get().data.as_ref().unwrap().get("password").unwrap();

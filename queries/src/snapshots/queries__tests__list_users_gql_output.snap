@@ -1,9 +1,0 @@
----
-source: queries/src/lib.rs
-expression: operation.query
----
-query ListUsers {
-  users {
-    id
-  }
-}
