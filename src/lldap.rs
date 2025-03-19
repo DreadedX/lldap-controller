@@ -4,7 +4,7 @@ use lldap_auth::registration::ServerRegistrationStartResponse;
 use lldap_auth::{opaque, registration};
 use reqwest::header::{HeaderMap, HeaderValue, AUTHORIZATION};
 use std::time::Duration;
-use tracing::debug;
+use tracing::{debug, trace};
 
 use cynic::http::{CynicReqwestError, ReqwestExt};
 use cynic::{GraphQlError, GraphQlResponse, MutationBuilder, QueryBuilder};
@@ -175,6 +175,43 @@ impl LldapClient {
             .await?;
 
         check_graphql_errors(response)?;
+
+        Ok(())
+    }
+
+    pub async fn update_user_groups(&self, user: &User, needed_groups: &[String]) -> Result<()> {
+        let all_groups = self.get_groups().await?;
+
+        // TODO: Error when invalid name
+        let needed_groups: Vec<_> = needed_groups
+            .iter()
+            .filter_map(|needed_group| {
+                all_groups
+                    .iter()
+                    .find(|group| &group.display_name == needed_group)
+                    .map(|group| group.id)
+            })
+            .collect();
+
+        let current_groups: Vec<_> = user.groups.iter().map(|group| group.id).collect();
+
+        let remove = current_groups
+            .iter()
+            .filter(|group| !needed_groups.contains(group));
+        for &group in remove {
+            trace!(username = user.id, group, "Removing user from group");
+
+            self.remove_user_from_group(&user.id, group).await?;
+        }
+
+        let add = needed_groups
+            .iter()
+            .filter(|group| !current_groups.contains(group));
+        for &group in add {
+            trace!(username = user.id, group, "Adding user to group");
+
+            self.add_user_to_group(&user.id, group).await?;
+        }
 
         Ok(())
     }
