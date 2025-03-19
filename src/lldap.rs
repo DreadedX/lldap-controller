@@ -101,7 +101,7 @@ pub struct LldapClient {
 
 impl LldapClient {
     pub async fn get_user(&self, username: &str) -> Result<User> {
-        let operation = GetUser::build(GetUserVariables { id: username });
+        let operation = GetUser::build(GetUserVariables { username });
         let response = self
             .client
             .post(format!("{}/api/graphql", self.url))
@@ -112,7 +112,7 @@ impl LldapClient {
     }
 
     pub async fn create_user(&self, username: &str) -> Result<User> {
-        let operation = CreateUser::build(CreateUserVariables { id: username });
+        let operation = CreateUser::build(CreateUserVariables { username });
 
         let response = self
             .client
@@ -124,7 +124,7 @@ impl LldapClient {
     }
 
     pub async fn delete_user(&self, username: &str) -> Result<()> {
-        let operation = DeleteUser::build(DeleteUserVariables { id: username });
+        let operation = DeleteUser::build(DeleteUserVariables { username });
 
         let response = self
             .client

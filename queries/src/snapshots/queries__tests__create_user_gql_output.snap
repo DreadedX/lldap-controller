@@ -2,8 +2,8 @@
 source: queries/src/lib.rs
 expression: operation.query
 ---
-mutation CreateUser($id: String!) {
-  createUser(user: {email: $id, id: $id}) {
+mutation CreateUser($username: String!) {
+  createUser(user: {email: $username, id: $username}) {
     id
     groups {
       id

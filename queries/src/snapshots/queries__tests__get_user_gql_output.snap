@@ -2,8 +2,8 @@
 source: queries/src/lib.rs
 expression: operation.query
 ---
-query GetUser($id: String!) {
-  user(userId: $id) {
+query GetUser($username: String!) {
+  user(userId: $username) {
     id
     groups {
       id

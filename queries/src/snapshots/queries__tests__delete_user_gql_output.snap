@@ -1,9 +1,9 @@
 ---
-source: src/lib.rs
+source: queries/src/lib.rs
 expression: operation.query
 ---
-mutation DeleteUser($id: String!) {
-  deleteUser(userId: $id) {
+mutation DeleteUser($username: String!) {
+  deleteUser(userId: $username) {
     ok
   }
 }
