@@ -219,7 +219,15 @@ impl Reconcile for ServiceUser {
         }?;
 
         trace!(name, "Updating groups");
-        let groups = self.spec.additional_groups.clone();
+        let mut groups = self.spec.additional_groups.clone();
+        groups.push(
+            if self.spec.password_manager {
+                "lldap_password_manager"
+            } else {
+                "lldap_strict_readonly"
+            }
+            .to_owned(),
+        );
         lldap_client.update_user_groups(&user, &groups).await?;
 
         trace!(name, "Updating password");
