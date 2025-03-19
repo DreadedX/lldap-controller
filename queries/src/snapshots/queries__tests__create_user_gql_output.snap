@@ -7,6 +7,7 @@ mutation CreateUser($username: String!) {
     id
     groups {
       id
+      displayName
     }
   }
 }

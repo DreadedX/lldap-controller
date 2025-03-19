@@ -199,7 +199,7 @@ impl Reconcile for ServiceUser {
         let lldap_client = ctx.lldap_config.build_client().await?;
 
         trace!(name, "Creating user if needed");
-        let _user = match lldap_client.get_user(&username).await {
+        let user = match lldap_client.get_user(&username).await {
             Err(lldap::Error::GraphQl(err))
                 if err.message == format!("Entity not found: `{username}`") =>
             {
@@ -217,6 +217,42 @@ impl Reconcile for ServiceUser {
             }
             Err(err) => Err(err),
         }?;
+
+        let groups = lldap_client.get_groups().await?;
+        // TODO: Error when invalid name
+        let needed_groups: Vec<_> = self
+            .spec
+            .additional_groups
+            .iter()
+            .filter_map(|additional_group| {
+                groups
+                    .iter()
+                    .find(|group| &group.display_name == additional_group)
+                    .map(|group| group.id)
+            })
+            .collect();
+
+        let current_groups: Vec<_> = user.groups.iter().map(|group| group.id).collect();
+
+        let remove = current_groups
+            .iter()
+            .filter(|group| !needed_groups.contains(group));
+        for &group in remove {
+            trace!(name, username, group, "Removing user from group");
+
+            lldap_client
+                .remove_user_from_group(&username, group)
+                .await?;
+        }
+
+        let add = needed_groups
+            .iter()
+            .filter(|group| !current_groups.contains(group));
+        for &group in add {
+            trace!(name, username, group, "Adding user to group");
+
+            lldap_client.add_user_to_group(&username, group).await?;
+        }
 
         trace!(name, "Updating password");
         let password = secret.get().data.as_ref().unwrap().get("password").unwrap();

@@ -44,6 +44,19 @@ pub struct AddUserToGroup {
 }
 
 #[derive(cynic::QueryVariables, Debug)]
+pub struct RemoveUserFromGroupVariables<'a> {
+    pub group: i32,
+    pub username: &'a str,
+}
+
+#[derive(cynic::QueryFragment, Debug)]
+#[cynic(graphql_type = "Mutation", variables = "RemoveUserFromGroupVariables")]
+pub struct RemoveUserFromGroup {
+    #[arguments(groupId: $group, userId: $username)]
+    pub remove_user_from_group: Success,
+}
+
+#[derive(cynic::QueryVariables, Debug)]
 pub struct GetUserVariables<'a> {
     pub username: &'a str,
 }
@@ -64,6 +77,13 @@ pub struct User {
 #[derive(cynic::QueryFragment, Debug)]
 pub struct Group {
     pub id: i32,
+    pub display_name: String,
+}
+
+#[derive(cynic::QueryFragment, Debug)]
+#[cynic(graphql_type = "Query")]
+pub struct GetGroups {
+    pub groups: Vec<Group>,
 }
 
 #[cfg(test)]
@@ -97,8 +117,25 @@ mod tests {
     }
 
     #[test]
+    fn remove_user_from_group_gql_output() {
+        let operation = RemoveUserFromGroup::build(RemoveUserFromGroupVariables {
+            group: 3,
+            username: "user",
+        });
+
+        insta::assert_snapshot!(operation.query);
+    }
+
+    #[test]
     fn get_user_gql_output() {
         let operation = GetUser::build(GetUserVariables { username: "user" });
+
+        insta::assert_snapshot!(operation.query);
+    }
+
+    #[test]
+    fn get_groups_gql_output() {
+        let operation = GetGroups::build(());
 
         insta::assert_snapshot!(operation.query);
     }

@@ -10,8 +10,9 @@ use cynic::http::{CynicReqwestError, ReqwestExt};
 use cynic::{GraphQlError, GraphQlResponse, MutationBuilder, QueryBuilder};
 use lldap_auth::login::{ClientSimpleLoginRequest, ServerLoginResponse};
 use queries::{
-    CreateUser, CreateUserVariables, DeleteUser, DeleteUserVariables, GetUser, GetUserVariables,
-    User,
+    AddUserToGroup, AddUserToGroupVariables, CreateUser, CreateUserVariables, DeleteUser,
+    DeleteUserVariables, GetGroups, GetUser, GetUserVariables, Group, RemoveUserFromGroup,
+    RemoveUserFromGroupVariables, User,
 };
 
 #[derive(thiserror::Error, Debug)]
@@ -125,6 +126,47 @@ impl LldapClient {
 
     pub async fn delete_user(&self, username: &str) -> Result<()> {
         let operation = DeleteUser::build(DeleteUserVariables { username });
+
+        let response = self
+            .client
+            .post(format!("{}/api/graphql", self.url))
+            .run_graphql(operation)
+            .await?;
+
+        check_graphql_errors(response)?;
+
+        Ok(())
+    }
+
+    pub async fn get_groups(&self) -> Result<Vec<Group>> {
+        let operation = GetGroups::build(());
+
+        let response = self
+            .client
+            .post(format!("{}/api/graphql", self.url))
+            .run_graphql(operation)
+            .await?;
+
+        Ok(check_graphql_errors(response)?.groups)
+    }
+
+    pub async fn add_user_to_group(&self, username: &str, group: i32) -> Result<()> {
+        let operation = AddUserToGroup::build(AddUserToGroupVariables { username, group });
+
+        let response = self
+            .client
+            .post(format!("{}/api/graphql", self.url))
+            .run_graphql(operation)
+            .await?;
+
+        check_graphql_errors(response)?;
+
+        Ok(())
+    }
+
+    pub async fn remove_user_from_group(&self, username: &str, group: i32) -> Result<()> {
+        let operation =
+            RemoveUserFromGroup::build(RemoveUserFromGroupVariables { username, group });
 
         let response = self
             .client

@@ -1,0 +1,9 @@
+---
+source: queries/src/lib.rs
+expression: operation.query
+---
+mutation RemoveUserFromGroup($group: Int!, $username: String!) {
+  removeUserFromGroup(groupId: $group, userId: $username) {
+    ok
+  }
+}

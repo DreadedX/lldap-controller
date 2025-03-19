@@ -1,0 +1,10 @@
+---
+source: queries/src/lib.rs
+expression: operation.query
+---
+query GetGroups {
+  groups {
+    id
+    displayName
+  }
+}
