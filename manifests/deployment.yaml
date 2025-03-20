@@ -21,7 +21,7 @@ spec:
       securityContext: {}
       containers:
         - name: lldap-controller
-          image: git.huizinga.dev/dreaded_x/lldap-controller:sha-${SHA_SHORT}
+          image: git.huizinga.dev/dreaded_x/lldap-controller@${DIGEST}
           imagePullPolicy: IfNotPresent
           securityContext: {}
           resources:
