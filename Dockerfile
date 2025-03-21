@@ -1,9 +1,20 @@
-FROM rust:1.85 AS builder
-WORKDIR /usr/src/lldap-controller
-ADD . .
-RUN cargo install --path .
+FROM rust:1.85 AS chef
+ENV CARGO_REGISTRIES_CRATES_IO_PROTOCOL=sparse
+RUN cargo install cargo-chef --locked --version 0.1.71
+WORKDIR /app
 
-FROM debian:bookworm-slim
-COPY --from=builder /usr/local/cargo/bin/lldap-controller /usr/local/bin/lldap-controller
-COPY --from=builder /usr/local/cargo/bin/crdgen /usr/local/bin/crdgen
-CMD ["lldap-controller"]
+FROM chef AS planner
+COPY . .
+RUN cargo chef prepare --recipe-path recipe.json
+
+FROM chef AS builder
+COPY --from=planner /app/recipe.json recipe.json
+RUN cargo chef cook --release --recipe-path recipe.json
+
+COPY . .
+RUN cargo build --release
+
+FROM gcr.io/distroless/cc-debian12:nonroot AS runtime
+COPY --from=builder /app/target/release/lldap-controller /lldap-controller
+COPY --from=builder /app/target/release/crdgen /crdgen
+CMD ["/lldap-controller"]

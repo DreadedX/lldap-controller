@@ -59,7 +59,7 @@ jobs:
 
       - name: Generate CRDs
         run: |
-          docker run --rm ${{ steps.build.outputs.imageid }} crdgen > ./manifests/crds.yaml
+          docker run --rm ${{ steps.build.outputs.imageid }} /crdgen > ./manifests/crds.yaml
 
       - name: Push container
         uses: docker/build-push-action@v6
