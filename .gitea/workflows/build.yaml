@@ -18,6 +18,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Get Git commit timestamps
+        run: echo "TIMESTAMP=$(git log -1 --pretty=%ct)" >> $GITHUB_ENV
+
       - name: Login to registry
         uses: docker/login-action@v3
         with:
@@ -56,6 +59,8 @@ jobs:
           context: .
           load: true
           labels: ${{ steps.meta.outputs.labels }}
+        env:
+          SOURCE_DATE_EPOCH: ${{ env.TIMESTAMP }}
 
       - name: Generate CRDs
         run: |
@@ -69,6 +74,8 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+        env:
+          SOURCE_DATE_EPOCH: ${{ env.TIMESTAMP }}
 
       - name: Kustomize manifests
         run: |
