@@ -15,7 +15,7 @@ insta = { version = "1.42.2", features = ["yaml"] }
 queries = { path = "./queries" }
 anyhow = "1.0.97"
 lldap_auth = { git = "https://github.com/lldap/lldap" }
-rand = { version = "0.8.0" }
+rand = { version = "0.8.5" }
 serde_json = "1.0.140"
 cynic = { workspace = true, features = ["http-reqwest"] }
 tokio = { version = "1.44.0", features = ["full"] }
