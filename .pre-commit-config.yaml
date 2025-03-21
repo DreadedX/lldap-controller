@@ -34,6 +34,14 @@ repos:
         types: [rust]
         pass_filenames: false
 
+      - id: audit
+        name: audit
+        description: Audit packages
+        entry: cargo audit
+        language: system
+        types: [rust]
+        pass_filenames: false
+
       - id: test
         name: test
         description: Rust test
