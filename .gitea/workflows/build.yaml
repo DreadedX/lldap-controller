@@ -58,7 +58,7 @@ jobs:
         with:
           context: .
           load: true
-          labels: ${{ steps.meta.outputs.labels }}
+          annotations: ${{ steps.meta.outputs.annotations }}
         env:
           SOURCE_DATE_EPOCH: ${{ env.TIMESTAMP }}
 
@@ -73,7 +73,7 @@ jobs:
           context: .
           push: true
           tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          annotations: ${{ steps.meta.outputs.annotations }}
         env:
           SOURCE_DATE_EPOCH: ${{ env.TIMESTAMP }}
 
