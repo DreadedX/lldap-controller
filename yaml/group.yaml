@@ -1,0 +1,5 @@
+apiVersion: lldap.huizinga.dev/v1
+kind: Group
+metadata:
+  name: test-group
+spec: {}

@@ -1,6 +1,5 @@
 apiVersion: lldap.huizinga.dev/v1
 kind: ServiceUser
 metadata:
-  name: authelia
-spec:
-  passwordManager: false
+  name: test-user
+spec: {}
