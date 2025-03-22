@@ -8,9 +8,10 @@ use lldap_auth::opaque::AuthenticationError;
 use lldap_auth::registration::ServerRegistrationStartResponse;
 use lldap_auth::{opaque, registration};
 use queries::{
-    AddUserToGroup, AddUserToGroupVariables, CreateUser, CreateUserVariables, DeleteUser,
-    DeleteUserVariables, GetGroups, GetUser, GetUserVariables, Group, RemoveUserFromGroup,
-    RemoveUserFromGroupVariables, User,
+    AddUserToGroup, AddUserToGroupVariables, CreateGroup, CreateGroupVariables, CreateUser,
+    CreateUserVariables, DeleteGroup, DeleteGroupVariables, DeleteUser, DeleteUserVariables,
+    GetGroups, GetUser, GetUserVariables, Group, RemoveUserFromGroup, RemoveUserFromGroupVariables,
+    User,
 };
 use reqwest::header::{AUTHORIZATION, HeaderMap, HeaderValue};
 use tracing::{debug, trace};
@@ -148,6 +149,32 @@ impl LldapClient {
             .await?;
 
         Ok(check_graphql_errors(response)?.groups)
+    }
+
+    pub async fn create_group(&self, name: &str) -> Result<Group> {
+        let operation = CreateGroup::build(CreateGroupVariables { name });
+
+        let response = self
+            .client
+            .post(format!("{}/api/graphql", self.url))
+            .run_graphql(operation)
+            .await?;
+
+        Ok(check_graphql_errors(response)?.create_group)
+    }
+
+    pub async fn delete_group(&self, id: i32) -> Result<()> {
+        let operation = DeleteGroup::build(DeleteGroupVariables { id });
+
+        let response = self
+            .client
+            .post(format!("{}/api/graphql", self.url))
+            .run_graphql(operation)
+            .await?;
+
+        check_graphql_errors(response)?;
+
+        Ok(())
     }
 
     pub async fn add_user_to_group(&self, username: &str, group: i32) -> Result<()> {

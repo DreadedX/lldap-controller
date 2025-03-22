@@ -1,9 +1,9 @@
+mod group;
 mod service_user;
 
 use core::fmt;
 use std::sync::Arc;
 
-use k8s_openapi::NamespaceResourceScope;
 use kube::runtime::controller::Action;
 use kube::runtime::finalizer;
 use kube::{Api, Resource, ResourceExt};
@@ -11,6 +11,7 @@ use serde::Serialize;
 use serde::de::DeserializeOwned;
 use tracing::{debug, instrument};
 
+pub use self::group::Group;
 pub use self::service_user::ServiceUser;
 use crate::context::Context;
 use crate::lldap;
@@ -46,19 +47,12 @@ trait Reconcile {
 #[instrument(skip(obj, ctx))]
 pub async fn reconcile<T>(obj: Arc<T>, ctx: Arc<Context>) -> Result<Action>
 where
-    T: Resource<Scope = NamespaceResourceScope>
-        + ResourceExt
-        + Clone
-        + Serialize
-        + DeserializeOwned
-        + fmt::Debug
-        + Reconcile,
+    T: Resource + ResourceExt + Clone + Serialize + DeserializeOwned + fmt::Debug + Reconcile,
     <T as Resource>::DynamicType: Default,
 {
     debug!(name = obj.name_any(), "Reconcile");
 
-    let namespace = obj.namespace().expect("Resource is namespace scoped");
-    let service_users = Api::<T>::namespaced(ctx.client.clone(), &namespace);
+    let service_users = Api::<T>::all(ctx.client.clone());
 
     Ok(
         finalizer(&service_users, &ctx.controller_name, obj, |event| async {

@@ -2,7 +2,8 @@ use kube::CustomResourceExt;
 
 fn main() {
     print!(
-        "{}",
-        serde_yaml::to_string(&lldap_controller::resources::ServiceUser::crd()).unwrap()
+        "{}---\n{}",
+        serde_yaml::to_string(&lldap_controller::resources::ServiceUser::crd()).unwrap(),
+        serde_yaml::to_string(&lldap_controller::resources::Group::crd()).unwrap()
     )
 }

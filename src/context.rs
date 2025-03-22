@@ -37,7 +37,15 @@ pub trait ControllerEvents {
     where
         T: Resource<DynamicType = ()> + Sync;
 
+    async fn group_created<T>(&self, obj: &T, name: &str) -> Result<(), Self::Error>
+    where
+        T: Resource<DynamicType = ()> + Sync;
+
     async fn user_deleted<T>(&self, obj: &T, username: &str) -> Result<(), Self::Error>
+    where
+        T: Resource<DynamicType = ()> + Sync;
+
+    async fn group_deleted<T>(&self, obj: &T, name: &str) -> Result<(), Self::Error>
     where
         T: Resource<DynamicType = ()> + Sync;
 
@@ -83,6 +91,23 @@ impl ControllerEvents for Recorder {
         .await
     }
 
+    async fn group_created<T>(&self, obj: &T, name: &str) -> Result<(), Self::Error>
+    where
+        T: Resource<DynamicType = ()> + Sync,
+    {
+        self.publish(
+            &Event {
+                type_: EventType::Normal,
+                reason: "GroupCreated".into(),
+                note: Some(format!("Created group '{name}'")),
+                action: "GroupCreated".into(),
+                secondary: None,
+            },
+            &obj.object_ref(&()),
+        )
+        .await
+    }
+
     async fn user_deleted<T>(&self, obj: &T, username: &str) -> Result<(), Self::Error>
     where
         T: Resource<DynamicType = ()> + Sync,
@@ -93,6 +118,23 @@ impl ControllerEvents for Recorder {
                 reason: "UserDeleted".into(),
                 note: Some(format!("Deleted user '{username}'")),
                 action: "UserDeleted".into(),
+                secondary: None,
+            },
+            &obj.object_ref(&()),
+        )
+        .await
+    }
+
+    async fn group_deleted<T>(&self, obj: &T, name: &str) -> Result<(), Self::Error>
+    where
+        T: Resource<DynamicType = ()> + Sync,
+    {
+        self.publish(
+            &Event {
+                type_: EventType::Normal,
+                reason: "GroupDeleted".into(),
+                note: Some(format!("Deleted group '{name}'")),
+                action: "GroupDeleted".into(),
                 secondary: None,
             },
             &obj.object_ref(&()),
