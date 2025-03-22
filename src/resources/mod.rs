@@ -3,7 +3,6 @@ mod service_user;
 use core::fmt;
 use std::sync::Arc;
 
-use async_trait::async_trait;
 use k8s_openapi::NamespaceResourceScope;
 use kube::runtime::controller::Action;
 use kube::runtime::finalizer;
@@ -38,7 +37,6 @@ impl From<finalizer::Error<Self>> for Error {
 
 type Result<T, E = Error> = std::result::Result<T, E>;
 
-#[async_trait]
 trait Reconcile {
     async fn reconcile(self: Arc<Self>, ctx: Arc<Context>) -> Result<Action>;
 

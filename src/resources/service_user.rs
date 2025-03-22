@@ -3,7 +3,6 @@ use std::str::from_utf8;
 use std::sync::Arc;
 use std::time::Duration;
 
-use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use k8s_openapi::api::core::v1::Secret;
 use k8s_openapi::apimachinery::pkg::apis::meta::v1::OwnerReference;
@@ -76,7 +75,6 @@ fn format_username(name: &str, namespace: &str) -> String {
     format!("{name}.{namespace}")
 }
 
-#[async_trait]
 impl Reconcile for ServiceUser {
     async fn reconcile(self: Arc<Self>, ctx: Arc<Context>) -> Result<Action> {
         let name = self

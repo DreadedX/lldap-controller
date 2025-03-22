@@ -1425,7 +1425,6 @@ name = "lldap-controller"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "async-trait",
  "chrono",
  "cynic",
  "futures",

@@ -1,4 +1,3 @@
-use async_trait::async_trait;
 use k8s_openapi::api::core::v1::Secret;
 use kube::runtime::events::{Event, EventType, Recorder, Reporter};
 use kube::{Resource, ResourceExt};
@@ -26,7 +25,7 @@ impl Context {
     }
 }
 
-#[async_trait]
+#[allow(async_fn_in_trait)]
 pub trait ControllerEvents {
     type Error;
 
@@ -47,7 +46,6 @@ pub trait ControllerEvents {
         T: Resource<DynamicType = ()> + Sync;
 }
 
-#[async_trait]
 impl ControllerEvents for Recorder {
     type Error = kube::Error;
 
