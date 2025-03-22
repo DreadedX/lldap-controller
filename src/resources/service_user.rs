@@ -1,4 +1,3 @@
-use core::fmt;
 use std::collections::BTreeMap;
 use std::str::from_utf8;
 use std::sync::Arc;
@@ -8,42 +7,18 @@ use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use k8s_openapi::api::core::v1::Secret;
 use k8s_openapi::apimachinery::pkg::apis::meta::v1::OwnerReference;
-use k8s_openapi::NamespaceResourceScope;
 use kube::api::{ObjectMeta, Patch, PatchParams, PostParams};
 use kube::runtime::controller::Action;
-use kube::runtime::finalizer;
-use kube::{Api, CustomResource, Resource, ResourceExt};
+use kube::{Api, CustomResource, Resource};
 use passwords::PasswordGenerator;
 use schemars::JsonSchema;
-use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-use tracing::{debug, instrument, trace, warn};
+use tracing::{debug, trace, warn};
 
+use super::{Error, Reconcile, Result};
 use crate::context::{Context, ControllerEvents};
 use crate::lldap;
-
-#[derive(thiserror::Error, Debug)]
-pub enum Error {
-    #[error("Failed to commit: {0}")]
-    Commit(#[from] kube::api::entry::CommitError),
-    #[error("Kube api error: {0}")]
-    Kube(#[from] kube::Error),
-    #[error("LLDAP error: {0}")]
-    Lldap(#[from] lldap::Error),
-    #[error("Finalizer error: {0}")]
-    Finalizer(#[source] Box<finalizer::Error<Self>>),
-    #[error("MissingObjectKey: {0}")]
-    MissingObjectKey(&'static str),
-}
-
-impl From<finalizer::Error<Self>> for Error {
-    fn from(error: finalizer::Error<Self>) -> Self {
-        Self::Finalizer(Box::new(error))
-    }
-}
-
-pub type Result<T, E = Error> = std::result::Result<T, E>;
 
 #[derive(CustomResource, Deserialize, Serialize, Clone, Debug, JsonSchema)]
 #[kube(
@@ -95,41 +70,6 @@ fn new_secret(username: &str, oref: OwnerReference) -> Secret {
         string_data: Some(contents),
         ..Default::default()
     }
-}
-
-#[async_trait]
-trait Reconcile {
-    async fn reconcile(self: Arc<Self>, ctx: Arc<Context>) -> Result<Action>;
-
-    async fn cleanup(self: Arc<Self>, ctx: Arc<Context>) -> Result<Action>;
-}
-
-#[instrument(skip(obj, ctx))]
-pub async fn reconcile<T>(obj: Arc<T>, ctx: Arc<Context>) -> Result<Action>
-where
-    T: Resource<Scope = NamespaceResourceScope>
-        + ResourceExt
-        + Clone
-        + Serialize
-        + DeserializeOwned
-        + fmt::Debug
-        + Reconcile,
-    <T as Resource>::DynamicType: Default,
-{
-    debug!(name = obj.name_any(), "Reconcile");
-
-    let namespace = obj.namespace().expect("Resource is namespace scoped");
-    let service_users = Api::<T>::namespaced(ctx.client.clone(), &namespace);
-
-    Ok(
-        finalizer(&service_users, &ctx.controller_name, obj, |event| async {
-            match event {
-                finalizer::Event::Apply(obj) => obj.reconcile(ctx.clone()).await,
-                finalizer::Event::Cleanup(obj) => obj.cleanup(ctx.clone()).await,
-            }
-        })
-        .await?,
-    )
 }
 
 fn format_username(name: &str, namespace: &str) -> String {
