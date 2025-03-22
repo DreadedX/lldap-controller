@@ -33,12 +33,17 @@ async fn log_status<T>(
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    let logger = tracing_subscriber::fmt::layer().json();
     let env_filter = EnvFilter::try_from_default_env()
         .or_else(|_| EnvFilter::try_new("info"))
         .expect("Fallback should be valid");
 
-    Registry::default().with(logger).with(env_filter).init();
+    if std::env::var("CARGO").is_ok() {
+        let logger = tracing_subscriber::fmt::layer().compact();
+        Registry::default().with(logger).with(env_filter).init();
+    } else {
+        let logger = tracing_subscriber::fmt::layer().json();
+        Registry::default().with(logger).with(env_filter).init();
+    }
 
     info!("Starting controller");
 
