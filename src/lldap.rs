@@ -42,6 +42,7 @@ fn check_graphql_errors<T>(response: GraphQlResponse<T>) -> Result<T> {
         .expect("Data should be valid if there are no error"))
 }
 
+#[derive(Clone)]
 pub struct LldapConfig {
     username: String,
     password: String,

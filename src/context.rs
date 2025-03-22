@@ -4,6 +4,7 @@ use kube::{Resource, ResourceExt};
 
 use crate::lldap::LldapConfig;
 
+#[derive(Clone)]
 pub struct Context {
     pub client: kube::Client,
     pub lldap_config: LldapConfig,
