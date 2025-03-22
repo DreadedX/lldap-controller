@@ -9,6 +9,9 @@ rules:
       - serviceusers
       - serviceusers/status
       - serviceusers/finalizers
+      - groups
+      - grours/status
+      - grours/finalizers
     verbs:
       - "*"
   - apiGroups:
