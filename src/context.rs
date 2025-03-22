@@ -1,9 +1,7 @@
 use async_trait::async_trait;
 use k8s_openapi::api::core::v1::Secret;
-use kube::{
-    runtime::events::{Event, EventType, Recorder, Reporter},
-    Resource, ResourceExt,
-};
+use kube::runtime::events::{Event, EventType, Recorder, Reporter};
+use kube::{Resource, ResourceExt};
 
 use crate::lldap::LldapConfig;
 

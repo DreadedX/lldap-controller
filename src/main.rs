@@ -1,18 +1,18 @@
-use std::{sync::Arc, time::Duration};
+use std::sync::Arc;
+use std::time::Duration;
 
 use futures::StreamExt;
 use k8s_openapi::api::core::v1::Secret;
-use kube::{
-    runtime::{controller::Action, Controller},
-    Api, Client as KubeClient,
-};
-use lldap_controller::{
-    context::Context,
-    lldap::LldapConfig,
-    resources::{self, reconcile, ServiceUser},
-};
+use kube::runtime::Controller;
+use kube::runtime::controller::Action;
+use kube::{Api, Client as KubeClient};
+use lldap_controller::context::Context;
+use lldap_controller::lldap::LldapConfig;
+use lldap_controller::resources::{self, ServiceUser, reconcile};
 use tracing::{debug, info, warn};
-use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter, Registry};
+use tracing_subscriber::layer::SubscriberExt;
+use tracing_subscriber::util::SubscriberInitExt;
+use tracing_subscriber::{EnvFilter, Registry};
 
 fn error_policy(_obj: Arc<ServiceUser>, err: &resources::Error, _ctx: Arc<Context>) -> Action {
     warn!("error: {}", err);

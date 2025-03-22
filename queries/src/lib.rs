@@ -88,9 +88,9 @@ pub struct GetGroups {
 
 #[cfg(test)]
 mod tests {
+    use cynic::{MutationBuilder, QueryBuilder};
+
     use super::*;
-    use cynic::MutationBuilder;
-    use cynic::QueryBuilder;
 
     #[test]
     fn delete_user_gql_output() {

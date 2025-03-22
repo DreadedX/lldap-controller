@@ -22,10 +22,12 @@ repos:
       - id: fmt
         name: fmt
         description: Format files with cargo fmt.
-        entry: cargo fmt
+        entry: cargo +nightly fmt
         language: system
         types: [rust]
         args: ["--", "--check"]
+        # For some reason some formatting is different depending on how you invoke?
+        pass_filenames: false
 
       - id: clippy
         name: clippy

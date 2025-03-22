@@ -1,19 +1,19 @@
-use anyhow::Context;
-use lldap_auth::opaque::AuthenticationError;
-use lldap_auth::registration::ServerRegistrationStartResponse;
-use lldap_auth::{opaque, registration};
-use reqwest::header::{HeaderMap, HeaderValue, AUTHORIZATION};
 use std::time::Duration;
-use tracing::{debug, trace};
 
+use anyhow::Context;
 use cynic::http::{CynicReqwestError, ReqwestExt};
 use cynic::{GraphQlError, GraphQlResponse, MutationBuilder, QueryBuilder};
 use lldap_auth::login::{ClientSimpleLoginRequest, ServerLoginResponse};
+use lldap_auth::opaque::AuthenticationError;
+use lldap_auth::registration::ServerRegistrationStartResponse;
+use lldap_auth::{opaque, registration};
 use queries::{
     AddUserToGroup, AddUserToGroupVariables, CreateUser, CreateUserVariables, DeleteUser,
     DeleteUserVariables, GetGroups, GetUser, GetUserVariables, Group, RemoveUserFromGroup,
     RemoveUserFromGroupVariables, User,
 };
+use reqwest::header::{AUTHORIZATION, HeaderMap, HeaderValue};
+use tracing::{debug, trace};
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {

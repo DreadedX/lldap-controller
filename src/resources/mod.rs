@@ -8,14 +8,13 @@ use k8s_openapi::NamespaceResourceScope;
 use kube::runtime::controller::Action;
 use kube::runtime::finalizer;
 use kube::{Api, Resource, ResourceExt};
-use serde::de::DeserializeOwned;
 use serde::Serialize;
+use serde::de::DeserializeOwned;
 use tracing::{debug, instrument};
 
+pub use self::service_user::ServiceUser;
 use crate::context::Context;
 use crate::lldap;
-
-pub use service_user::ServiceUser;
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {

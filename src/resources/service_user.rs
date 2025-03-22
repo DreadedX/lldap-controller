@@ -229,8 +229,9 @@ impl Reconcile for ServiceUser {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use kube::CustomResourceExt;
+
+    use super::*;
 
     #[test]
     fn service_user_crd_output() {
