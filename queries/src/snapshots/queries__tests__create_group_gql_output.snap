@@ -1,0 +1,10 @@
+---
+source: queries/src/lib.rs
+expression: operation.query
+---
+mutation CreateGroup($name: String!) {
+  createGroup(name: $name) {
+    id
+    displayName
+  }
+}

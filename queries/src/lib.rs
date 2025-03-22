@@ -86,6 +86,30 @@ pub struct GetGroups {
     pub groups: Vec<Group>,
 }
 
+#[derive(cynic::QueryVariables, Debug)]
+pub struct CreateGroupVariables<'a> {
+    pub name: &'a str,
+}
+
+#[derive(cynic::QueryFragment, Debug)]
+#[cynic(graphql_type = "Mutation", variables = "CreateGroupVariables")]
+pub struct CreateGroup {
+    #[arguments(name: $name)]
+    pub create_group: Group,
+}
+
+#[derive(cynic::QueryVariables, Debug)]
+pub struct DeleteGroupVariables {
+    pub id: i32,
+}
+
+#[derive(cynic::QueryFragment, Debug)]
+#[cynic(graphql_type = "Mutation", variables = "DeleteGroupVariables")]
+pub struct DeleteGroup {
+    #[arguments(groupId: $id)]
+    pub delete_group: Success,
+}
+
 #[cfg(test)]
 mod tests {
     use cynic::{MutationBuilder, QueryBuilder};
@@ -136,6 +160,20 @@ mod tests {
     #[test]
     fn get_groups_gql_output() {
         let operation = GetGroups::build(());
+
+        insta::assert_snapshot!(operation.query);
+    }
+
+    #[test]
+    fn create_group_gql_output() {
+        let operation = CreateGroup::build(CreateGroupVariables { name: "group" });
+
+        insta::assert_snapshot!(operation.query);
+    }
+
+    #[test]
+    fn delete_group_gql_output() {
+        let operation = DeleteGroup::build(DeleteGroupVariables { id: 0 });
 
         insta::assert_snapshot!(operation.query);
     }

@@ -1,0 +1,9 @@
+---
+source: queries/src/lib.rs
+expression: operation.query
+---
+mutation DeleteGroup($id: Int!) {
+  deleteGroup(groupId: $id) {
+    ok
+  }
+}
