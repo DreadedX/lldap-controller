@@ -59,6 +59,8 @@ jobs:
           context: .
           load: true
           annotations: ${{ steps.meta.outputs.annotations }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
         env:
           SOURCE_DATE_EPOCH: ${{ env.TIMESTAMP }}
 
