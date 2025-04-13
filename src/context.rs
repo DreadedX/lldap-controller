@@ -34,23 +34,19 @@ pub trait ControllerEvents {
     where
         T: Resource<DynamicType = ()> + Sync;
 
-    async fn user_created<T>(&self, obj: &T, username: &str) -> Result<(), Self::Error>
+    async fn user_created<T>(&self, obj: &T) -> Result<(), Self::Error>
     where
         T: Resource<DynamicType = ()> + Sync;
 
-    async fn group_created<T>(&self, obj: &T, name: &str) -> Result<(), Self::Error>
+    async fn group_created<T>(&self, obj: &T) -> Result<(), Self::Error>
     where
         T: Resource<DynamicType = ()> + Sync;
 
-    async fn user_deleted<T>(&self, obj: &T, username: &str) -> Result<(), Self::Error>
+    async fn user_deleted<T>(&self, obj: &T) -> Result<(), Self::Error>
     where
         T: Resource<DynamicType = ()> + Sync;
 
-    async fn group_deleted<T>(&self, obj: &T, name: &str) -> Result<(), Self::Error>
-    where
-        T: Resource<DynamicType = ()> + Sync;
-
-    async fn user_not_found<T>(&self, obj: &T, username: &str) -> Result<(), Self::Error>
+    async fn group_deleted<T>(&self, obj: &T) -> Result<(), Self::Error>
     where
         T: Resource<DynamicType = ()> + Sync;
 
@@ -87,16 +83,16 @@ impl ControllerEvents for Recorder {
         .await
     }
 
-    async fn user_created<T>(&self, obj: &T, username: &str) -> Result<(), Self::Error>
+    async fn user_created<T>(&self, obj: &T) -> Result<(), Self::Error>
     where
         T: Resource<DynamicType = ()> + Sync,
     {
         self.publish(
             &Event {
                 type_: EventType::Normal,
-                reason: "UserCreated".into(),
-                note: Some(format!("Created user '{username}'")),
-                action: "UserCreated".into(),
+                reason: "Created".into(),
+                note: Some("Created user".into()),
+                action: "Created".into(),
                 secondary: None,
             },
             &obj.object_ref(&()),
@@ -104,16 +100,16 @@ impl ControllerEvents for Recorder {
         .await
     }
 
-    async fn group_created<T>(&self, obj: &T, name: &str) -> Result<(), Self::Error>
+    async fn group_created<T>(&self, obj: &T) -> Result<(), Self::Error>
     where
         T: Resource<DynamicType = ()> + Sync,
     {
         self.publish(
             &Event {
                 type_: EventType::Normal,
-                reason: "GroupCreated".into(),
-                note: Some(format!("Created group '{name}'")),
-                action: "GroupCreated".into(),
+                reason: "Created".into(),
+                note: Some("Created group".into()),
+                action: "Created".into(),
                 secondary: None,
             },
             &obj.object_ref(&()),
@@ -121,16 +117,16 @@ impl ControllerEvents for Recorder {
         .await
     }
 
-    async fn user_deleted<T>(&self, obj: &T, username: &str) -> Result<(), Self::Error>
+    async fn user_deleted<T>(&self, obj: &T) -> Result<(), Self::Error>
     where
         T: Resource<DynamicType = ()> + Sync,
     {
         self.publish(
             &Event {
                 type_: EventType::Normal,
-                reason: "UserDeleted".into(),
-                note: Some(format!("Deleted user '{username}'")),
-                action: "UserDeleted".into(),
+                reason: "Deleted".into(),
+                note: Some("Deleted user".into()),
+                action: "Deleted".into(),
                 secondary: None,
             },
             &obj.object_ref(&()),
@@ -138,33 +134,16 @@ impl ControllerEvents for Recorder {
         .await
     }
 
-    async fn group_deleted<T>(&self, obj: &T, name: &str) -> Result<(), Self::Error>
+    async fn group_deleted<T>(&self, obj: &T) -> Result<(), Self::Error>
     where
         T: Resource<DynamicType = ()> + Sync,
     {
         self.publish(
             &Event {
                 type_: EventType::Normal,
-                reason: "GroupDeleted".into(),
-                note: Some(format!("Deleted group '{name}'")),
-                action: "GroupDeleted".into(),
-                secondary: None,
-            },
-            &obj.object_ref(&()),
-        )
-        .await
-    }
-
-    async fn user_not_found<T>(&self, obj: &T, username: &str) -> Result<(), Self::Error>
-    where
-        T: Resource<DynamicType = ()> + Sync,
-    {
-        self.publish(
-            &Event {
-                type_: EventType::Warning,
-                reason: "UserNotFound".into(),
-                note: Some(format!("User '{username}' not found")),
-                action: "UserNotFound".into(),
+                reason: "Deleted".into(),
+                note: Some("Deleted group".into()),
+                action: "Deleted".into(),
                 secondary: None,
             },
             &obj.object_ref(&()),

@@ -144,7 +144,7 @@ impl Reconcile for ServiceUser {
                 debug!(name, username, "Creating new user");
 
                 let user = lldap_client.create_user(&username).await?;
-                ctx.recorder.user_created(self.as_ref(), &username).await?;
+                ctx.recorder.user_created(self.as_ref()).await?;
 
                 Ok(user)
             }
@@ -208,14 +208,11 @@ impl Reconcile for ServiceUser {
             Err(lldap::Error::GraphQl(err))
                 if err.message == format!("Entity not found: `No such user: '{username}'`") =>
             {
-                ctx.recorder
-                    .user_not_found(self.as_ref(), &username)
-                    .await?;
                 warn!(name, username, "User not found");
                 Ok(())
             }
             Ok(_) => {
-                ctx.recorder.user_deleted(self.as_ref(), &username).await?;
+                ctx.recorder.user_deleted(self.as_ref()).await?;
                 Ok(())
             }
             Err(err) => Err(err),

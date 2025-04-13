@@ -39,7 +39,7 @@ impl Reconcile for Group {
 
             lldap_client.create_group(&name).await?;
 
-            ctx.recorder.group_created(self.as_ref(), &name).await?;
+            ctx.recorder.group_created(self.as_ref()).await?;
         } else {
             trace!("Group already exists");
         }
@@ -66,7 +66,7 @@ impl Reconcile for Group {
 
             lldap_client.delete_group(group.id).await?;
 
-            ctx.recorder.group_deleted(self.as_ref(), &name).await?;
+            ctx.recorder.group_deleted(self.as_ref()).await?;
         } else {
             trace!(name, "Group does not exist")
         }

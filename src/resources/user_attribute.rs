@@ -11,11 +11,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::json;
 use tracing::{debug, trace, warn};
 
-use crate::{
-    context::ControllerEvents,
-    lldap,
-    resources::{Error, user_attribute},
-};
+use crate::{context::ControllerEvents, lldap, resources::Error};
 
 use super::Reconcile;
 
