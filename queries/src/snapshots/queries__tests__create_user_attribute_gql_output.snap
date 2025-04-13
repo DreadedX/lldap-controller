@@ -1,0 +1,9 @@
+---
+source: queries/src/lib.rs
+expression: operation.query
+---
+mutation CreateUserAttribute($editable: Boolean!, $list: Boolean!, $name: String!, $type: AttributeType!, $visible: Boolean!) {
+  addUserAttribute(attributeType: $type, isEditable: $editable, isList: $list, isVisible: $visible, name: $name) {
+    ok
+  }
+}

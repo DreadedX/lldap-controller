@@ -53,6 +53,18 @@ pub trait ControllerEvents {
     async fn user_not_found<T>(&self, obj: &T, username: &str) -> Result<(), Self::Error>
     where
         T: Resource<DynamicType = ()> + Sync;
+
+    async fn user_attribute_created<T>(&self, obj: &T) -> Result<(), Self::Error>
+    where
+        T: Resource<DynamicType = ()> + Sync;
+
+    async fn user_attribute_desync<T>(&self, obj: &T, fields: &[String]) -> Result<(), Self::Error>
+    where
+        T: Resource<DynamicType = ()> + Sync;
+
+    async fn user_attribute_deleted<T>(&self, obj: &T) -> Result<(), Self::Error>
+    where
+        T: Resource<DynamicType = ()> + Sync;
 }
 
 impl ControllerEvents for Recorder {
@@ -153,6 +165,59 @@ impl ControllerEvents for Recorder {
                 reason: "UserNotFound".into(),
                 note: Some(format!("User '{username}' not found")),
                 action: "UserNotFound".into(),
+                secondary: None,
+            },
+            &obj.object_ref(&()),
+        )
+        .await
+    }
+
+    async fn user_attribute_created<T>(&self, obj: &T) -> Result<(), Self::Error>
+    where
+        T: Resource<DynamicType = ()> + Sync,
+    {
+        self.publish(
+            &Event {
+                type_: EventType::Warning,
+                reason: "Created".into(),
+                note: Some("Created user attribute".into()),
+                action: "Created".into(),
+                secondary: None,
+            },
+            &obj.object_ref(&()),
+        )
+        .await
+    }
+
+    async fn user_attribute_desync<T>(&self, obj: &T, fields: &[String]) -> Result<(), Self::Error>
+    where
+        T: Resource<DynamicType = ()> + Sync,
+    {
+        self.publish(
+            &Event {
+                type_: EventType::Warning,
+                reason: "Desync".into(),
+                note: Some(format!(
+                    "User attribute fields '{fields:?}' are out of sync"
+                )),
+                action: "Desync".into(),
+                secondary: None,
+            },
+            &obj.object_ref(&()),
+        )
+        .await
+    }
+
+    async fn user_attribute_deleted<T>(&self, obj: &T) -> Result<(), Self::Error>
+    where
+        T: Resource<DynamicType = ()> + Sync,
+    {
+        self.publish(
+            &Event {
+                type_: EventType::Warning,
+                reason: "Deleted".into(),
+                note: Some("Deleted user attribute'".into()),
+                action: "Deleted".into(),
                 secondary: None,
             },
             &obj.object_ref(&()),

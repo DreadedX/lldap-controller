@@ -110,6 +110,68 @@ pub struct DeleteGroup {
     pub delete_group: Success,
 }
 
+#[derive(cynic::QueryFragment, Debug)]
+#[cynic(graphql_type = "Query")]
+pub struct GetUserAttributes {
+    pub schema: Schema,
+}
+
+#[derive(cynic::QueryFragment, Debug)]
+pub struct Schema {
+    pub user_schema: AttributeList,
+}
+
+#[derive(cynic::QueryFragment, Debug)]
+pub struct AttributeList {
+    pub attributes: Vec<AttributeSchema>,
+}
+
+#[derive(cynic::QueryFragment, Debug)]
+pub struct AttributeSchema {
+    pub name: String,
+    pub is_visible: bool,
+    pub is_list: bool,
+    pub is_editable: bool,
+    pub attribute_type: AttributeType,
+}
+
+#[derive(cynic::Enum, Clone, Copy, Debug, PartialEq, Eq)]
+pub enum AttributeType {
+    String,
+    Integer,
+    JpegPhoto,
+    DateTime,
+}
+
+#[derive(cynic::QueryVariables, Debug)]
+pub struct CreateUserAttributeVariables<'a> {
+    pub editable: bool,
+    pub list: bool,
+    pub name: &'a str,
+    #[cynic(rename = "type")]
+    pub r#type: AttributeType,
+    pub visible: bool,
+}
+
+#[derive(cynic::QueryFragment, Debug)]
+#[cynic(graphql_type = "Mutation", variables = "CreateUserAttributeVariables")]
+pub struct CreateUserAttribute {
+    #[arguments(attributeType: $r#type, isEditable: $editable, isList: $list, isVisible: $visible, name: $name)]
+    pub add_user_attribute: Success,
+}
+
+#[derive(cynic::QueryVariables, Debug)]
+pub struct DeleteUserAttributeVariables<'a> {
+    pub name: &'a str,
+}
+
+#[derive(cynic::QueryFragment, Debug)]
+#[cynic(graphql_type = "Mutation", variables = "DeleteUserAttributeVariables")]
+pub struct DeleteUserAttribute {
+    #[arguments(name: $name)]
+    pub delete_user_attribute: Success,
+}
+
 #[cfg(test)]
 mod tests {
     use cynic::{MutationBuilder, QueryBuilder};
@@ -174,6 +236,33 @@ mod tests {
     #[test]
     fn delete_group_gql_output() {
         let operation = DeleteGroup::build(DeleteGroupVariables { id: 0 });
+
+        insta::assert_snapshot!(operation.query);
+    }
+
+    #[test]
+    fn get_user_attributes_gql_output() {
+        let operation = GetUserAttributes::build(());
+
+        insta::assert_snapshot!(operation.query);
+    }
+
+    #[test]
+    fn create_user_attribute_gql_output() {
+        let operation = CreateUserAttribute::build(CreateUserAttributeVariables {
+            r#type: AttributeType::String,
+            list: true,
+            editable: true,
+            visible: true,
+            name: "attr",
+        });
+
+        insta::assert_snapshot!(operation.query);
+    }
+
+    #[test]
+    fn delete_user_attribute_gql_output() {
+        let operation = DeleteUserAttribute::build(DeleteUserAttributeVariables { name: "attr" });
 
         insta::assert_snapshot!(operation.query);
     }

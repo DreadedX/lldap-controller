@@ -1,0 +1,17 @@
+---
+source: queries/src/lib.rs
+expression: operation.query
+---
+query GetUserAttributes {
+  schema {
+    userSchema {
+      attributes {
+        name
+        isVisible
+        isList
+        isEditable
+        attributeType
+      }
+    }
+  }
+}

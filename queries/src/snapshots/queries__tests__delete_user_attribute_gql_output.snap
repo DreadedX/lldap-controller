@@ -1,0 +1,9 @@
+---
+source: queries/src/lib.rs
+expression: operation.query
+---
+mutation DeleteUserAttribute($name: String!) {
+  deleteUserAttribute(name: $name) {
+    ok
+  }
+}

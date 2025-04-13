@@ -1,5 +1,6 @@
 mod group;
 mod service_user;
+mod user_attribute;
 
 use core::fmt;
 use std::sync::Arc;
@@ -13,6 +14,7 @@ use tracing::{debug, instrument};
 
 pub use self::group::Group;
 pub use self::service_user::ServiceUser;
+pub use self::user_attribute::{Type as AttributeType, UserAttribute};
 use crate::context::Context;
 use crate::lldap;
 
@@ -28,6 +30,8 @@ pub enum Error {
     Finalizer(#[source] Box<finalizer::Error<Self>>),
     #[error("MissingObjectKey: {0}")]
     MissingObjectKey(&'static str),
+    #[error("UserAttributeDesync: {0:?}")]
+    UserAttributeDesync(Vec<String>),
 }
 
 impl From<finalizer::Error<Self>> for Error {

@@ -1,0 +1,9 @@
+apiVersion: lldap.huizinga.dev/v1
+kind: UserAttribute
+metadata:
+  name: test-attribute
+spec:
+  type: String
+  list: true
+  userVisible: true
+  userEditable: true
