@@ -12,6 +12,9 @@ rules:
       - groups
       - grours/status
       - grours/finalizers
+      - userattributes
+      - userattributes/status
+      - userattributes/finalizers
     verbs:
       - "*"
   - apiGroups:
