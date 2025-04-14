@@ -5,6 +5,7 @@ mod user_attribute;
 use core::fmt;
 use std::sync::Arc;
 
+use k8s_openapi::{ClusterResourceScope, NamespaceResourceScope};
 use kube::runtime::controller::Action;
 use kube::runtime::finalizer;
 use kube::{Api, Resource, ResourceExt};
@@ -49,22 +50,52 @@ trait Reconcile {
 }
 
 #[instrument(skip(obj, ctx))]
-pub async fn reconcile<T>(obj: Arc<T>, ctx: Arc<Context>) -> Result<Action>
+pub async fn reconcile_namespaced<T>(obj: Arc<T>, ctx: Arc<Context>) -> Result<Action>
 where
-    T: Resource + ResourceExt + Clone + Serialize + DeserializeOwned + fmt::Debug + Reconcile,
+    T: Resource<Scope = NamespaceResourceScope>
+        + ResourceExt
+        + Clone
+        + Serialize
+        + DeserializeOwned
+        + fmt::Debug
+        + Reconcile,
     <T as Resource>::DynamicType: Default,
 {
     debug!(name = obj.name_any(), "Reconcile");
 
-    let service_users = Api::<T>::all(ctx.client.clone());
+    let namespace = obj.namespace().expect("resource should be namespaced");
+    let api = Api::<T>::namespaced(ctx.client.clone(), &namespace);
 
-    Ok(
-        finalizer(&service_users, &ctx.controller_name, obj, |event| async {
-            match event {
-                finalizer::Event::Apply(obj) => obj.reconcile(ctx.clone()).await,
-                finalizer::Event::Cleanup(obj) => obj.cleanup(ctx.clone()).await,
-            }
-        })
-        .await?,
-    )
+    Ok(finalizer(&api, &ctx.controller_name, obj, |event| async {
+        match event {
+            finalizer::Event::Apply(obj) => obj.reconcile(ctx.clone()).await,
+            finalizer::Event::Cleanup(obj) => obj.cleanup(ctx.clone()).await,
+        }
+    })
+    .await?)
+}
+
+#[instrument(skip(obj, ctx))]
+pub async fn reconcile<T>(obj: Arc<T>, ctx: Arc<Context>) -> Result<Action>
+where
+    T: Resource<Scope = ClusterResourceScope>
+        + ResourceExt
+        + Clone
+        + Serialize
+        + DeserializeOwned
+        + fmt::Debug
+        + Reconcile,
+    <T as Resource>::DynamicType: Default,
+{
+    debug!(name = obj.name_any(), "Reconcile");
+
+    let api = Api::<T>::all(ctx.client.clone());
+
+    Ok(finalizer(&api, &ctx.controller_name, obj, |event| async {
+        match event {
+            finalizer::Event::Apply(obj) => obj.reconcile(ctx.clone()).await,
+            finalizer::Event::Cleanup(obj) => obj.cleanup(ctx.clone()).await,
+        }
+    })
+    .await?)
 }

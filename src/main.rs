@@ -9,7 +9,9 @@ use kube::runtime::{Controller, watcher};
 use kube::{Api, Client as KubeClient, Resource};
 use lldap_controller::context::Context;
 use lldap_controller::lldap::LldapConfig;
-use lldap_controller::resources::{self, Error, Group, ServiceUser, UserAttribute, reconcile};
+use lldap_controller::resources::{
+    self, Error, Group, ServiceUser, UserAttribute, reconcile, reconcile_namespaced,
+};
 use tracing::{debug, info, warn};
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
@@ -61,7 +63,7 @@ async fn main() -> anyhow::Result<()> {
     let service_user_controller = Controller::new(service_users, Default::default())
         .owns(secrets, Default::default())
         .shutdown_on_signal()
-        .run(reconcile, error_policy, Arc::new(data.clone()))
+        .run(reconcile_namespaced, error_policy, Arc::new(data.clone()))
         .for_each(log_status);
 
     let groups = Api::<Group>::all(client.clone());
