@@ -7,6 +7,7 @@ use kube::runtime::controller::{self, Action};
 use kube::runtime::reflector::ObjectRef;
 use kube::runtime::{Controller, watcher};
 use kube::{Api, Client as KubeClient, Resource};
+use lldap_controller::VERSION;
 use lldap_controller::context::Context;
 use lldap_controller::lldap::LldapConfig;
 use lldap_controller::resources::{
@@ -47,7 +48,7 @@ async fn main() -> anyhow::Result<()> {
         Registry::default().with(logger).with(env_filter).init();
     }
 
-    info!("Starting controller");
+    info!(version = VERSION, "Starting");
 
     let client = KubeClient::try_default().await?;
 

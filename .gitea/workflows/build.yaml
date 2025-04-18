@@ -18,8 +18,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Get Git commit timestamps
-        run: echo "TIMESTAMP=$(git log -1 --pretty=%ct)" >> $GITHUB_ENV
+      - name: Set timestamp and release version
+        run: |
+          echo "TIMESTAMP=$(git log -1 --pretty=%ct)" >> $GITHUB_ENV
+          git fetch --prune --unshallow --tags --force
+          echo "RELEASE_VERSION=$(git describe --always --dirty='--modified')" >> $GITHUB_ENV
+          cat $GITHUB_ENV
 
       - name: Login to registry
         uses: docker/login-action@v3
@@ -52,25 +56,9 @@ jobs:
             type=semver,pattern=v{{major}}.{{minor}}
             type=semver,pattern=v{{major}}
 
-      - name: Build and export to docker
+      - name: Build container
         id: build
         uses: docker/build-push-action@v6
-        with:
-          context: .
-          load: true
-          annotations: ${{ steps.meta.outputs.annotations }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-        env:
-          SOURCE_DATE_EPOCH: ${{ env.TIMESTAMP }}
-
-      - name: Generate CRDs
-        run: |
-          docker run --rm ${{ steps.build.outputs.imageid }} /crdgen > ./manifests/crds.yaml
-
-      - name: Push container
-        uses: docker/build-push-action@v6
-        id: push
         with:
           context: .
           push: true
@@ -78,20 +66,28 @@ jobs:
           provenance: mode=max
           tags: ${{ steps.meta.outputs.tags }}
           annotations: ${{ steps.meta.outputs.annotations }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            "RELEASE_VERSION=${{ env.RELEASE_VERSION }}"
         env:
           SOURCE_DATE_EPOCH: ${{ env.TIMESTAMP }}
 
+      - name: Generate CRDs
+        run: |
+          docker run --rm ${{ env.OCI_REPO }}@${{ steps.build.outputs.imageid }} /crdgen > ./manifests/crds.yaml
+
       - name: Kustomize manifests
         run: |
-          ./kustomize build ./manifests | sed "s/\${DIGEST}/${{ steps.push.outputs.digest }}/" > ./manifests.yaml
+          ./kustomize build ./manifests | sed "s/\${DIGEST}/${{ steps.build.outputs.digest }}/" > ./manifests.yaml
 
       - name: Push manifests
         run: |
-          flux push artifact oci://$OCI_REPO/manifests:latest \
+          flux push artifact oci://${{ env.OCI_REPO }}/manifests:${{ gitea.head_ref || gitea.ref_name }} \
             --path="./manifests.yaml" \
             --source="$(git config --get remote.origin.url)" \
             --revision="$(git rev-parse HEAD)" \
             $(echo "${{ steps.meta.outputs.labels }}" | sed -e 's/^/-a /')
 
-          flux tag artifact oci://$OCI_REPO/manifests:latest \
+          flux tag artifact oci://${{ env.OCI_REPO }}/manifests:${{ gitea.head_ref || gitea.ref_name }} \
             $(echo "${{ steps.meta.outputs.tags }}" | sed -e 's/^.*:/--tag /')

@@ -2,17 +2,19 @@ fail_fast: true
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.6.0
+    rev: v5.0.0
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
       - id: check-yaml
+        args:
+          - --allow-multiple-documents
       - id: check-toml
       - id: check-added-large-files
       - id: check-merge-conflict
 
   - repo: https://github.com/crate-ci/typos
-    rev: v1.21.0
+    rev: v1.31.1
     hooks:
       - id: typos
         args: ["--force-exclude"]
@@ -43,6 +45,17 @@ repos:
         name: audit
         description: Audit packages
         entry: cargo audit
+        args: ["--deny", "warnings"]
+        language: system
+        pass_filenames: false
+        verbose: true
+        always_run: true
+
+      - id: udeps
+        name: unused
+        description: Check for unused crates
+        entry: cargo +nightly udeps
+        args: ["--workspace"]
         language: system
         types: [file]
         files: (\.rs|Cargo.lock)$

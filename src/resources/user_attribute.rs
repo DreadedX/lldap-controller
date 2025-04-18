@@ -1,19 +1,18 @@
 use std::time::Duration;
 
-use kube::{
-    Api, CELSchema, CustomResource,
-    api::{Patch, PatchParams},
-    runtime::controller::Action,
-};
+use kube::api::{Patch, PatchParams};
+use kube::runtime::controller::Action;
+use kube::{Api, CELSchema, CustomResource};
 use queries::AttributeType;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use tracing::{debug, trace, warn};
 
-use crate::{context::ControllerEvents, lldap, resources::Error};
-
 use super::Reconcile;
+use crate::context::ControllerEvents;
+use crate::lldap;
+use crate::resources::Error;
 
 #[derive(Deserialize, Serialize, Clone, Copy, Debug, JsonSchema)]
 pub enum Type {
