@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use anyhow::Context;
+use color_eyre::eyre::Context;
 use cynic::http::{CynicReqwestError, ReqwestExt};
 use cynic::{GraphQlError, GraphQlResponse, MutationBuilder, QueryBuilder};
 use lldap_auth::login::{ClientSimpleLoginRequest, ServerLoginResponse};
@@ -53,14 +53,13 @@ pub struct LldapConfig {
 }
 
 impl LldapConfig {
-    pub fn try_from_env() -> anyhow::Result<Self> {
+    pub fn try_from_env() -> color_eyre::Result<Self> {
         Ok(Self {
             username: std::env::var("LLDAP_USERNAME")
-                .context("Variable 'LLDAP_USERNAME' is not set or invalid")?,
+                .wrap_err("Variable 'LLDAP_USERNAME' is not set")?,
             password: std::env::var("LLDAP_PASSWORD")
-                .context("Variable 'LLDAP_PASSWORD' is not set or invalid")?,
-            url: std::env::var("LLDAP_URL")
-                .context("Variable 'LLDAP_URL' is not set or invalid")?,
+                .wrap_err("Variable 'LLDAP_PASSWORD' is not set")?,
+            url: std::env::var("LLDAP_URL").wrap_err("Variable 'LLDAP_URL' is not set")?,
         })
     }
 

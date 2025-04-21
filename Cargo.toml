@@ -13,7 +13,6 @@ insta = { version = "1.42.2", features = ["yaml"] }
 
 [dependencies]
 queries = { path = "./queries" }
-anyhow = "1.0.97"
 lldap_auth = { git = "https://github.com/lldap/lldap" }
 rand = { version = "0.8.5" }
 serde_json = "1.0.140"
@@ -35,6 +34,7 @@ reqwest = { version = "0.12.14", default-features = false, features = [
   "rustls-tls",
 ] }
 git-version = "0.3.9"
+color-eyre = "0.6.3"
 
 [dev-dependencies]
 insta = { workspace = true }
