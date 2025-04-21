@@ -9,6 +9,7 @@ use k8s_openapi::apimachinery::pkg::apis::meta::v1::OwnerReference;
 use kube::api::{ObjectMeta, Patch, PatchParams, PostParams};
 use kube::runtime::controller::Action;
 use kube::{Api, CustomResource, Resource};
+use leon::{Template, vals};
 use passwords::PasswordGenerator;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -113,6 +114,31 @@ impl Reconcile for ServiceUser {
                 debug!(name, secret_name, "Generating new secret");
 
                 new_secret(&username, oref)
+            })
+            .and_modify(|secret| {
+                let bind_dn_template = match Template::parse(&ctx.bind_dn_template) {
+                    Ok(template) => template,
+                    Err(err) => {
+                        warn!("Invalid bind_dn template: {err}");
+                        return;
+                    }
+                };
+
+                let bind_dn = match bind_dn_template.render(&&vals(|key| match key {
+                    "username" => Some(username.clone().into()),
+                    _ => None,
+                })) {
+                    Ok(bind_dn) => bind_dn,
+                    Err(err) => {
+                        warn!("Failed to render bind_dn template: {err}");
+                        return;
+                    }
+                };
+
+                secret
+                    .string_data
+                    .get_or_insert_default()
+                    .insert("bind_dn".into(), bind_dn);
             });
 
         trace!(name, "Committing secret");

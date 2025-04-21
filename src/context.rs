@@ -10,10 +10,16 @@ pub struct Context {
     pub lldap_config: LldapConfig,
     pub controller_name: String,
     pub recorder: Recorder,
+    pub bind_dn_template: String,
 }
 
 impl Context {
-    pub fn new(controller_name: &str, client: kube::Client, lldap_config: LldapConfig) -> Self {
+    pub fn new(
+        controller_name: &str,
+        client: kube::Client,
+        lldap_config: LldapConfig,
+        bind_dn_template: impl Into<String>,
+    ) -> Self {
         let reporter: Reporter = controller_name.into();
         let recorder = Recorder::new(client.clone(), reporter);
 
@@ -22,6 +28,7 @@ impl Context {
             lldap_config,
             controller_name: controller_name.into(),
             recorder,
+            bind_dn_template: bind_dn_template.into(),
         }
     }
 }

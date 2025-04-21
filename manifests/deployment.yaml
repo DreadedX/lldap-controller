@@ -43,3 +43,5 @@ spec:
                 secretKeyRef:
                   name: lldap-credentials
                   key: lldap-ldap-user-pass
+            - name: LLDAP_BIND_DN
+              value: uid={username},ou=people,dc=huizinga,dc=dev

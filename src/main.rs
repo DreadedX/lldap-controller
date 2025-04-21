@@ -1,6 +1,7 @@
 use std::sync::Arc;
 use std::time::Duration;
 
+use color_eyre::eyre::Context as _;
 use dotenvy::dotenv;
 use futures::StreamExt;
 use k8s_openapi::api::core::v1::Secret;
@@ -54,12 +55,15 @@ async fn main() -> color_eyre::Result<()> {
 
     info!(version = VERSION, "Starting");
 
+    let bind_dn_template = std::env::var("LLDAP_BIND_DN").wrap_err("LLDAP_BIND_DN is not set")?;
+
     let client = KubeClient::try_default().await?;
 
     let data = Context::new(
         "lldap.huizinga.dev",
         client.clone(),
         LldapConfig::try_from_env()?,
+        bind_dn_template,
     );
 
     let secrets = Api::<Secret>::all(client.clone());
