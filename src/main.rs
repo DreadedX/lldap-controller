@@ -1,6 +1,7 @@
 use std::sync::Arc;
 use std::time::Duration;
 
+use dotenvy::dotenv;
 use futures::StreamExt;
 use k8s_openapi::api::core::v1::Secret;
 use kube::runtime::controller::{self, Action};
@@ -37,6 +38,7 @@ async fn log_status<T>(
 #[tokio::main]
 async fn main() -> color_eyre::Result<()> {
     color_eyre::install()?;
+    dotenv().ok();
 
     let env_filter = EnvFilter::try_from_default_env()
         .or_else(|_| EnvFilter::try_new("info"))
