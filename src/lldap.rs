@@ -1,6 +1,5 @@
 use std::time::Duration;
 
-use color_eyre::eyre::Context;
 use cynic::http::{CynicReqwestError, ReqwestExt};
 use cynic::{GraphQlError, GraphQlResponse, MutationBuilder, QueryBuilder};
 use lldap_auth::login::{ClientSimpleLoginRequest, ServerLoginResponse};
@@ -29,6 +28,8 @@ pub enum Error {
     Authentication(#[from] AuthenticationError),
     #[error("GraphQL error: {0}")]
     GraphQl(#[from] GraphQlError),
+    #[error("Missing environment variable: {0}")]
+    MissingEnvironmentVariable(&'static str),
 }
 
 pub type Result<T, E = Error> = std::result::Result<T, E>;
@@ -53,13 +54,14 @@ pub struct LldapConfig {
 }
 
 impl LldapConfig {
-    pub fn try_from_env() -> color_eyre::Result<Self> {
+    pub fn try_from_env() -> Result<Self> {
         Ok(Self {
             username: std::env::var("LLDAP_USERNAME")
-                .wrap_err("Variable 'LLDAP_USERNAME' is not set")?,
+                .map_err(|_| Error::MissingEnvironmentVariable("LLDAP_USERNAME"))?,
             password: std::env::var("LLDAP_PASSWORD")
-                .wrap_err("Variable 'LLDAP_PASSWORD' is not set")?,
-            url: std::env::var("LLDAP_URL").wrap_err("Variable 'LLDAP_URL' is not set")?,
+                .map_err(|_| Error::MissingEnvironmentVariable("LLDAP_PASSWORD"))?,
+            url: std::env::var("LLDAP_URL")
+                .map_err(|_| Error::MissingEnvironmentVariable("LLDAP_URL"))?,
         })
     }
 
