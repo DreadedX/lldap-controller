@@ -30,6 +30,8 @@ pub enum Error {
     GraphQl(#[from] GraphQlError),
     #[error("Missing environment variable: {0}")]
     MissingEnvironmentVariable(&'static str),
+    #[error("Could not read password file: {0}")]
+    CouldNotReadPasswordFile(#[from] std::io::Error),
 }
 
 pub type Result<T, E = Error> = std::result::Result<T, E>;
@@ -55,11 +57,23 @@ pub struct LldapConfig {
 
 impl LldapConfig {
     pub fn try_from_env() -> Result<Self> {
+        let password = std::env::var("LLDAP_PASSWORD_FILE").map_or_else(
+            |_| {
+                std::env::var("LLDAP_PASSWORD").map_err(|_| {
+                    Error::MissingEnvironmentVariable("LLDAP_PASSWORD or LLDAP_PASSWORD_FILE")
+                })
+            },
+            |path| {
+                std::fs::read_to_string(path)
+                    .map(|v| v.trim().into())
+                    .map_err(|err| err.into())
+            },
+        )?;
+
         Ok(Self {
             username: std::env::var("LLDAP_USERNAME")
                 .map_err(|_| Error::MissingEnvironmentVariable("LLDAP_USERNAME"))?,
-            password: std::env::var("LLDAP_PASSWORD")
-                .map_err(|_| Error::MissingEnvironmentVariable("LLDAP_PASSWORD"))?,
+            password,
             url: std::env::var("LLDAP_URL")
                 .map_err(|_| Error::MissingEnvironmentVariable("LLDAP_URL"))?,
         })

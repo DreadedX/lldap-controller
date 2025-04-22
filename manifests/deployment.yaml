@@ -31,6 +31,10 @@ spec:
             requests:
               cpu: 50m
               memory: 100Mi
+          volumeMounts:
+            - name: credentials
+              readOnly: true
+              mountPath: "/secrets/credentials"
           env:
             - name: RUST_LOG
               value: info,lldap_controller=debug
@@ -38,10 +42,11 @@ spec:
               value: "http://lldap:17170"
             - name: LLDAP_USERNAME
               value: admin
-            - name: LLDAP_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: lldap-credentials
-                  key: lldap-ldap-user-pass
+            - name: LLDAP_PASSWORD_FILE
+              value: /secrets/credentials/lldap-ldap-user-pass
             - name: LLDAP_BIND_DN
               value: uid={username},ou=people,dc=huizinga,dc=dev
+      volumes:
+        - name: credentials
+          secret:
+            secretName: lldap-credentials
