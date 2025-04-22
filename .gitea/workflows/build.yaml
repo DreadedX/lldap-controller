@@ -91,3 +91,18 @@ jobs:
 
           flux tag artifact oci://${{ env.OCI_REPO }}/manifests:${{ gitea.head_ref || gitea.ref_name }} \
             $(echo "${{ steps.meta.outputs.tags }}" | sed -e 's/^.*:/--tag /')
+
+      - name: Notify build status
+        if: failure()
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_TO }}
+          token: ${{ secrets.TELEGRAM_TOKEN }}
+          # TODO: Escaping issues need to be solved first
+          # format: markdown
+          message: |
+            🚨 *BUILD FAILED!*
+            ${{ gitea.repository }} (#${{ gitea.run_number }})
+
+            [${{ gitea.ref_name }} @ ${{ gitea.sha }}]
+            > ${{ gitea.event.head_commit.message }}
