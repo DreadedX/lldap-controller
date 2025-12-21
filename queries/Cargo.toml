@@ -1,7 +1,7 @@
 [package]
 name = "queries"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 
 [dependencies]
 cynic = { workspace = true }
@@ -10,4 +10,4 @@ cynic = { workspace = true }
 insta = { workspace = true }
 
 [build-dependencies]
-cynic-codegen = "3.10.0"
+cynic-codegen = { workspace = true }

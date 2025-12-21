@@ -1,7 +1,7 @@
-FROM rust:1.86 AS base
+FROM rust:1.92 AS base
 ENV CARGO_REGISTRIES_CRATES_IO_PROTOCOL=sparse
-RUN cargo install cargo-chef --locked --version 0.1.71 && \
-    cargo install cargo-auditable --locked --version 0.6.6
+RUN cargo install cargo-chef --locked --version 0.1.73 && \
+    cargo install cargo-auditable --locked --version 0.7.2
 WORKDIR /app
 
 FROM base AS planner

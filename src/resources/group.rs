@@ -1,6 +1,7 @@
 use std::sync::Arc;
 use std::time::Duration;
 
+use async_trait::async_trait;
 use kube::CustomResource;
 use kube::runtime::controller::Action;
 use schemars::JsonSchema;
@@ -19,6 +20,7 @@ use crate::context::{Context, ControllerEvents};
 #[serde(rename_all = "camelCase")]
 pub struct GroupSpec {}
 
+#[async_trait]
 impl Reconcile for Group {
     async fn reconcile(self: Arc<Self>, ctx: Arc<Context>) -> Result<Action> {
         let name = self

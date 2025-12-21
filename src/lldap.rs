@@ -37,10 +37,10 @@ pub enum Error {
 pub type Result<T, E = Error> = std::result::Result<T, E>;
 
 fn check_graphql_errors<T>(response: GraphQlResponse<T>) -> Result<T> {
-    if let Some(errors) = &response.errors {
-        if !errors.is_empty() {
-            Err(errors.first().expect("Should not be empty").clone())?;
-        }
+    if let Some(errors) = &response.errors
+        && !errors.is_empty()
+    {
+        Err(errors.first().expect("Should not be empty").clone())?;
     }
 
     Ok(response

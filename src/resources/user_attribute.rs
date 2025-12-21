@@ -1,8 +1,9 @@
 use std::time::Duration;
 
+use async_trait::async_trait;
 use kube::api::{Patch, PatchParams};
 use kube::runtime::controller::Action;
-use kube::{Api, CELSchema, CustomResource};
+use kube::{Api, CustomResource, KubeSchema};
 use queries::AttributeType;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -33,7 +34,7 @@ impl From<Type> for AttributeType {
     }
 }
 
-#[derive(CustomResource, Deserialize, Serialize, Clone, Debug, CELSchema)]
+#[derive(CustomResource, Deserialize, Serialize, Clone, Debug, KubeSchema)]
 #[kube(
     kind = "UserAttribute",
     group = "lldap.huizinga.dev",
@@ -51,11 +52,11 @@ impl From<Type> for AttributeType {
     printcolumn = r#"{"name":"Age", "type":"date", "jsonPath":".metadata.creationTimestamp"}"#
 )]
 #[kube(
-    rule = Rule::new("self.spec == oldSelf.spec").message("User attributes are immutable"),
-    rule = Rule::new("!self.spec.userEditable || self.spec.userVisible && self.spec.userEditable").message("Editable attribute must also be visible")
+    validation = Rule::new("self.spec == oldSelf.spec").message("User attributes are immutable"),
+    validation = Rule::new("!self.spec.userEditable || self.spec.userVisible && self.spec.userEditable").message("Editable attribute must also be visible")
 )]
 #[serde(rename_all = "camelCase")]
-pub struct UesrAttributeSpec {
+pub struct UserAttributeSpec {
     r#type: Type,
     #[serde(default)]
     list: bool,
@@ -70,6 +71,7 @@ pub struct UserAttributesStatus {
     pub synced: bool,
 }
 
+#[async_trait]
 impl Reconcile for UserAttribute {
     async fn reconcile(
         self: std::sync::Arc<Self>,

@@ -5,6 +5,7 @@ mod user_attribute;
 use core::fmt;
 use std::sync::Arc;
 
+use async_trait::async_trait;
 use k8s_openapi::{ClusterResourceScope, NamespaceResourceScope};
 use kube::runtime::controller::Action;
 use kube::runtime::finalizer;
@@ -43,7 +44,8 @@ impl From<finalizer::Error<Self>> for Error {
 
 type Result<T, E = Error> = std::result::Result<T, E>;
 
-trait Reconcile {
+#[async_trait]
+pub trait Reconcile {
     async fn reconcile(self: Arc<Self>, ctx: Arc<Context>) -> Result<Action>;
 
     async fn cleanup(self: Arc<Self>, ctx: Arc<Context>) -> Result<Action>;
