@@ -43,10 +43,10 @@ spec:
             - name: LLDAP_USERNAME
               value: admin
             - name: LLDAP_PASSWORD_FILE
-              value: /secrets/credentials/lldap-ldap-user-pass
+              value: /secrets/credentials/admin-pass
             - name: LLDAP_BIND_DN
               value: uid={username},ou=people,dc=huizinga,dc=dev
       volumes:
         - name: credentials
           secret:
-            secretName: lldap-credentials
+            secretName: credentials
