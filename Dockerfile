@@ -20,6 +20,6 @@ RUN cargo auditable build --release && /app/target/release/crdgen > /crds.yaml
 FROM scratch AS manifests
 COPY --from=builder /crds.yaml /
 
-FROM gcr.io/distroless/cc-debian12:nonroot AS runtime
+FROM gcr.io/distroless/cc-debian13:nonroot AS runtime
 COPY --from=builder /app/target/release/lldap-controller /lldap-controller
 CMD ["/lldap-controller"]
