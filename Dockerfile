@@ -15,9 +15,11 @@ RUN cargo chef cook --release --recipe-path recipe.json
 COPY . .
 ARG RELEASE_VERSION
 ENV RELEASE_VERSION=${RELEASE_VERSION}
-RUN cargo auditable build --release
+RUN cargo auditable build --release && /app/target/release/crdgen > /crds.yaml
+
+FROM scratch AS manifests
+COPY --from=builder /crds.yaml /
 
 FROM gcr.io/distroless/cc-debian12:nonroot AS runtime
 COPY --from=builder /app/target/release/lldap-controller /lldap-controller
-COPY --from=builder /app/target/release/crdgen /crdgen
 CMD ["/lldap-controller"]

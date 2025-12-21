@@ -9,8 +9,7 @@ on:
 
 jobs:
   build:
-    uses: dreaded_x/workflows/.gitea/workflows/rust-kubernetes.yaml@66ab50c3ac239dbdd1e42e6276ec2e65b6a79379
+    uses: infra/workflows/.gitea/workflows/docker.yaml@956337b9bd5e72a93d3a57513cd421e7554dd61d
     secrets: inherit
     with:
-      generate_crds: true
       webhook_url: ${{ secrets.WEBHOOK_URL }}

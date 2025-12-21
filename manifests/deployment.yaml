@@ -21,7 +21,7 @@ spec:
       securityContext: {}
       containers:
         - name: lldap-controller
-          image: git.huizinga.dev/dreaded_x/lldap-controller@${DIGEST}
+          image: '{{ index .images "lldap-controller" }}'
           imagePullPolicy: IfNotPresent
           securityContext: {}
           resources:
