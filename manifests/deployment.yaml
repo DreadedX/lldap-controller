@@ -18,12 +18,17 @@ spec:
         kubectl.kubernetes.io/default-container: lldap-controller
     spec:
       serviceAccountName: lldap-controller
-      securityContext: {}
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: lldap-controller
           image: '{{ index .images "lldap-controller" }}'
           imagePullPolicy: IfNotPresent
-          securityContext: {}
           resources:
             limits:
               cpu: 200m
@@ -46,6 +51,12 @@ spec:
               value: /secrets/credentials/admin-pass
             - name: LLDAP_BIND_DN
               value: uid={username},ou=people,dc=huizinga,dc=dev
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            capabilities:
+              drop:
+                - ALL
       volumes:
         - name: credentials
           secret:
