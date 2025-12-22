@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: lldap-controller
+  namespace: lldap
   labels:
     app: lldap-controller
     app.kubernetes.io/name: lldap-controller
