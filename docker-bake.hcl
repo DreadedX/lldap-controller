@@ -6,9 +6,23 @@ group "default" {
 }
 
 target "docker-metadata-action" {}
+target "cache" {
+  cache-from = [
+    {
+      type = "gha",
+    }
+  ]
+
+  cache-to = [
+    {
+      type = "gha",
+      mode = "max"
+    }
+  ]
+}
 
 target "lldap-controller" {
-  inherits = ["docker-metadata-action"]
+  inherits = ["docker-metadata-action", "cache"]
   context = "./"
   dockerfile = "Dockerfile"
   tags = [for tag in target.docker-metadata-action.tags : "${TAG_BASE}:${tag}"]
@@ -16,6 +30,7 @@ target "lldap-controller" {
 }
 
 target "manifests" {
+  inherits = ["cache"]
   context = "./"
   dockerfile = "Dockerfile"
   target = "manifests"
